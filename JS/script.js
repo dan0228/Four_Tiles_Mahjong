@@ -350,10 +350,17 @@ function handleTileClick(playerId, tile, tileElement) {
  */
 function handleRonCheck(playerId, discardedTile) {
     // 捨て牌リストを更新
-    discardedTiles[playerId] = discardedTile; // ここで牌の文字列を格納
+    discardedTiles[playerId] = discardedTile;
 
-    PLAYER_IDS.forEach(otherPlayerId => {
-        if (otherPlayerId !== playerId && checkRon(otherPlayerId, playerId)) {
+    // 現在のプレイヤーのインデックスを取得
+    const currentPlayerIndex = PLAYER_IDS.indexOf(playerId);
+
+    // 現在のプレイヤーの次の人から反時計回りにロン判定を行う
+    for (let i = 1; i < PLAYER_IDS.length; i++) {
+        const otherPlayerIndex = (currentPlayerIndex + i) % PLAYER_IDS.length;
+        const otherPlayerId = PLAYER_IDS[otherPlayerIndex];
+
+        if (checkRon(otherPlayerId, playerId)) {
             // ロン可能である場合にtrueにする
             isRonPossible = true;
 
@@ -366,7 +373,8 @@ function handleRonCheck(playerId, discardedTile) {
             // スキップボタンのイベントリスナーを設定
             setupRonSkipButtonListener(otherPlayerId);
         }
-    });
+    }
+    // ロン可能でなかった場合、ターンを終了
     if (!isRonPossible) {
         endTurn();
     }
@@ -448,7 +456,6 @@ function checkTsumo(playerId) {
 
         return true;
     }
-
     return false;
 }
 
@@ -533,7 +540,7 @@ function isWinningHand(tiles) {
     if (storeKotsu) {
         if (remainingTiles.length > 0) {
             // pairTileが字牌かどうかを判定
-            if (SUIT_TYPES.includes(pairTile[1])) {
+            if (SUIT_TYPES.includes(pairTile.slice(0, 1))) {
                 // 数牌の場合のみ、数字を抽出
                 const [suit, number] = pairTile.match(/(.+)(\d+)/).slice(1);
                 remainingTiles.push({ suit, number: parseInt(number) });
@@ -563,13 +570,9 @@ function isWinningHand(tiles) {
  * @returns {boolean} 面子かどうか
  */
 function checkMeld(tiles) {
-    if (tiles.length === 0) {
-        return true; // 牌がなくなれば和了
-    }
-
     // 刻子判定
     if (tiles.length >= 3 && tiles[0].suit === tiles[1].suit && tiles[1].suit === tiles[2].suit && tiles[0].number === tiles[1].number && tiles[1].number === tiles[2].number) {
-        return checkMeld(tiles.slice(3)); // 刻子を取り除いて再帰的に判定
+        return true;
     }
 
     // 順子判定
@@ -580,8 +583,7 @@ function checkMeld(tiles) {
             tiles[i + 1].number === tiles[i].number + 1 && // i+1番目の牌がi番目の牌の次の数字であることを確認
             tiles[i + 2].number === tiles[i + 1].number + 1 // i+2番目の牌がi+1番目の牌の次の数字であることを確認
         ) {
-            // 順子を見つけたら、その3枚を取り除いて再帰的に判定
-            return checkMeld([...tiles.slice(0, i), ...tiles.slice(i + 3)]);
+            return true;
         }
     }
 
@@ -737,7 +739,6 @@ function setupTsumoSkipButtonListener(playerId) {
     skipButtons[playerId].addEventListener('click', () => {
         // ツモの場合はスキップボタンを押しても何も処理を行わない
         // ボタン類は非表示にする
-        hideAllRonButtons();
         hideAllTsumoButtons();
         hideAllSkipButtons();
     });
