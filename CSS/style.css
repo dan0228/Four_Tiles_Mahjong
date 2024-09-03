@@ -1,0 +1,222 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f8f8f8;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.tile {
+    display: inline-block;
+    width: 50px;
+    height: 70px;
+    margin: 2px;
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    line-height: 70px;
+    font-size: 24px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.player-container {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.player-hand {
+    display: flex;
+    flex-wrap: nowrap;
+    margin: 0;
+    padding: 0;
+}
+
+.player-discarded {
+    display: flex;
+    flex-wrap: nowrap;
+    position: absolute;
+    top: -80px;
+    width: 100%;
+    justify-content: center;
+}
+
+/* 自分の手牌（画面の下側） */
+#bottom-player {
+    bottom: 200px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* 左側の手牌（画面の左側） */
+#left-player {
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    transform-origin: bottom right;
+}
+
+/* 右側の手牌（画面の右側） */
+#right-player {
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    transform-origin: bottom left;
+}
+
+/* 上部の手牌（画面の上側） */
+#top-player {
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) rotate(180deg);
+    transform-origin: bottom center;
+}
+
+#main {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 萬子を赤色に */
+.tile.manzu {
+    color: red;
+}
+
+/* 筒子を青色に */
+.tile.pinzu {
+    color: blue;
+}
+
+/* 紗子を緑色に */
+.tile.sozu {
+    color: green;
+}
+
+/* ツモボタンのスタイル */
+#bottom-tsumo-button,
+#left-tsumo-button,
+#right-tsumo-button,
+#top-tsumo-button {
+    position: absolute;
+    display: block;
+}
+
+#bottom-tsumo-button {
+    left: calc(50% + 120px);
+    bottom: 200px;
+}
+
+#left-tsumo-button {
+    left: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#right-tsumo-button {
+    right: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#top-tsumo-button {
+    left: calc(50% + 120px);
+    top: 20px;
+}
+
+/* ロンボタンのスタイル */
+#bottom-ron-button,
+#left-ron-button,
+#right-ron-button,
+#top-ron-button {
+    position: absolute;
+    display: block;
+}
+
+#bottom-ron-button {
+    left: calc(50% + 120px);
+    bottom: 200px;
+}
+
+#left-ron-button {
+    left: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#right-ron-button {
+    right: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#top-ron-button {
+    left: calc(50% + 120px);
+    top: 20px;
+}
+
+/* スキップボタンのスタイル */
+#bottom-skip-button,
+#left-skip-button,
+#right-skip-button,
+#top-skip-button {
+    position: absolute;
+    display: block;
+}
+
+#bottom-skip-button {
+    left: calc(50% + 200px);
+    /* ロンボタンから少し離す */
+    bottom: 200px;
+}
+
+#left-skip-button {
+    left: 120px;
+    /* ロンボタンから少し離す */
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#right-skip-button {
+    right: 120px;
+    /* ロンボタンから少し離す */
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#top-skip-button {
+    left: calc(50% + 200px);
+    /* ロンボタンから少し離す */
+    top: 20px;
+}
+
+/* ゲーム情報エリアのスタイル */
+#game-info {
+    position: absolute;
+    /* 絶対位置指定 */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* 中央寄せ */
+    z-index: 10;
+    /* 他の要素より手前に表示 */
+    background-color: rgba(255, 255, 255, 0.8);
+    /* 半透明の背景 */
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* 残り牌数のテキストスタイル */
+#remaining-tiles {
+    font-size: 24px;
+    font-weight: bold;
+}
