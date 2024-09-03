@@ -100,18 +100,18 @@ body {
     color: blue;
 }
 
-/* 紗子を緑色に */
+/* 索子を緑色に */
 .tile.sozu {
     color: green;
 }
 
 /* ツモボタンのスタイル */
-#bottom-tsumo-button,
-#left-tsumo-button,
-#right-tsumo-button,
-#top-tsumo-button {
-    position: absolute;
+.player-hand #bottom-tsumo-button,
+.player-hand #left-tsumo-button,
+.player-hand #right-tsumo-button,
+.player-hand #top-tsumo-button {
     display: block;
+    margin-left: 10px;
 }
 
 #bottom-tsumo-button {
@@ -137,12 +137,12 @@ body {
 }
 
 /* ロンボタンのスタイル */
-#bottom-ron-button,
-#left-ron-button,
-#right-ron-button,
-#top-ron-button {
-    position: absolute;
+.player-hand #bottom-ron-button,
+.player-hand #left-ron-button,
+.player-hand #right-ron-button,
+.player-hand #top-ron-button {
     display: block;
+    margin-left: 10px;
 }
 
 #bottom-ron-button {
@@ -200,6 +200,21 @@ body {
     left: calc(50% + 200px);
     /* ロンボタンから少し離す */
     top: 20px;
+}
+
+/* 左側プレイヤーのボタンは回転を戻す */
+#left-player .player-hand button {
+    transform: rotate(-90deg);
+}
+
+/* 右側プレイヤーのボタンは回転を戻す */
+#right-player .player-hand button {
+    transform: rotate(90deg);
+}
+
+/* 上側プレイヤーのボタンは回転を戻す */
+#top-player .player-hand button {
+    transform: rotate(180deg);
 }
 
 /* ゲーム情報エリアのスタイル */

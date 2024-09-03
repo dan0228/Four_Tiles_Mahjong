@@ -722,7 +722,6 @@ function setupRonSkipButtonListener(playerId) {
 function handleRonSkip() {
     // ロンボタン、ツモボタン、スキップボタンを非表示
     hideAllRonButtons();
-    hideAllTsumoButtons();
     hideAllSkipButtons();
 
     // スキップしたらターンを進める
@@ -737,7 +736,13 @@ function handleRonSkip() {
  */
 function setupTsumoSkipButtonListener(playerId) {
     skipButtons[playerId].addEventListener('click', () => {
-        // ツモの場合はスキップボタンを押しても何も処理を行わない
+        // 既存のロンイベントリスナーを削除
+        const skipButton = skipButtons[playerId];
+        skipButton.removeEventListener('click', handleRonSkip);
+
+        // 新しいロンイベントリスナーを設定
+        skipButton.addEventListener('click', handleRonSkip);
+
         // ボタン類は非表示にする
         hideAllTsumoButtons();
         hideAllSkipButtons();
