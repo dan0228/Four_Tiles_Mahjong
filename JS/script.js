@@ -26,6 +26,17 @@ let ronButtons = {};
 let skipButtons = {};
 let remainingTilesElement = null; // 残り牌数を表示する要素をキャッシュ
 
+// audioタグを取得
+const dahaiSound = document.getElementById("dahaiSound");
+let soundUnlocked = false;
+
+// ユーザーインタラクションを待ってからダミー音声を読み込む
+document.addEventListener('click', () => {
+    if (!soundUnlocked) {
+        unlockAudio();
+    }
+});
+
 // --- 牌の操作に関する関数 ---
 
 /**
@@ -36,7 +47,34 @@ let remainingTilesElement = null; // 残り牌数を表示する要素をキャ�
 function createTileElement(tile) {
     const tileElement = document.createElement('div');
     tileElement.className = 'tile';
-    tileElement.textContent = tile;
+
+    // 牌の画像を追加
+    const imgElement = document.createElement('img');
+    // 牌の種類と数字を取得 (字牌は種類のみ)
+    const suit = tile.slice(-1);
+    const number = SUIT_TYPES.includes(suit) ? tile.slice(0, -1) : null;
+
+    // 画像ファイル名を生成
+    let imgFileName = "";
+    if (number !== null) {
+        // 数牌の場合
+        imgFileName = `${suit}_${number}.png`;
+    } else {
+        // 字牌の場合
+        switch (suit) {
+            case '東': imgFileName = "zi_ton.png"; break;
+            case '南': imgFileName = "zi_nan.png"; break;
+            case '西': imgFileName = "zi_sha.png"; break;
+            case '北': imgFileName = "zi_pei.png"; break;
+            case '白': imgFileName = "zi_haku.png"; break;
+            case '發': imgFileName = "zi_hatsu.png"; break;
+            case '中': imgFileName = "zi_chun.png"; break;
+        }
+    }
+
+    imgElement.src = `picture/${imgFileName}`; // 修正後の画像ファイルパス
+    imgElement.alt = tile; // 画像が表示されない場合の代替テキスト
+    tileElement.appendChild(imgElement);
 
     // 牌の種類に応じてクラスを追加
     if (tile.includes('萬')) {
@@ -54,15 +92,27 @@ function createTileElement(tile) {
  * 指定されたプレイヤーの手牌に牌を追加する関数
  * @param {string} playerId プレイヤーID
  * @param {string} tile 牌の文字列表現
+ * @param {boolean} isTsumo ツモ牌かどうか
  */
-function addTileToHand(playerId, tile) {
+function addTileToHand(playerId, tile, isTsumo = false) {
     const playerHandElement = playerHandElements[playerId];
     if (!playerHandElement) {
         console.error(`Element with ID ${playerId}-hand not found.`);
         return;
     }
     const tileElement = createTileElement(tile);
+
+    // ツモ牌の場合、tsumo-tileクラスを追加
+    if (isTsumo) {
+        tileElement.classList.add("tsumo-tile");
+    }
+
     playerHandElement.appendChild(tileElement);
+
+    // 追加した牌にクリックイベントリスナーを設定
+    tileElement.addEventListener('click', () => {
+        handleTileClick(playerId, tile, tileElement);
+    });
 }
 
 /**
@@ -114,16 +164,20 @@ function sortHand(playerId) {
     };
 
     tilesArray.sort((a, b) => {
-        const typeA = a.textContent.slice(-1);
-        const typeB = b.textContent.slice(-1);
+        // imgタグのalt属性から牌の文字列を取得
+        const typeA = a.querySelector('img').alt.slice(-1);
+        const typeB = b.querySelector('img').alt.slice(-1);
         if (typeA === typeB) {
-            return parseInt(a.textContent) - parseInt(b.textContent);
+            return parseInt(a.querySelector('img').alt) - parseInt(b.querySelector('img').alt);
         }
         return tileTextOrder[typeA] - tileTextOrder[typeB];
     });
 
     playerHandElement.innerHTML = '';
     tilesArray.forEach(tileDiv => playerHandElement.appendChild(tileDiv));
+
+    // ソート後、tsumo-tile クラスを削除
+    tilesArray.forEach(tileDiv => tileDiv.classList.remove("tsumo-tile"));
 }
 
 // --- ゲーム進行に関する関数 ---
@@ -136,7 +190,7 @@ function initializeGame() {
     initializeTiles();
 
     // 残り牌数を初期化
-    remainingTilesCount = allTiles.length - 14; //王牌を引く
+    remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
 
     // DOM要素をキャッシュ
     cacheDOMElements();
@@ -239,9 +293,6 @@ function startTurn(playerId) {
 
     // ツモ判定を行う
     checkTsumo(playerId);
-
-    // 最後に追加された牌にクリックイベントリスナーを設定
-    setupLastTileClickListener(playerId);
 }
 
 /**
@@ -284,16 +335,23 @@ function handleTileClick(playerId, tile, tileElement) {
         addTileToDiscarded(playerId, tile);
         sortHand(playerId);
 
+        // 打牌音を再生
+        playSound(dahaiSound);
+
         // ロン判定と処理
-        handleRonCheck(playerId);
+        handleRonCheck(playerId, tile);
     }
 }
 
 /**
  * ロン判定と処理を行う
  * @param {string} playerId 牌を捨てたプレイヤーID
+ * @param {string} discardedTile 捨てられた牌の文字列
  */
-function handleRonCheck(playerId) {
+function handleRonCheck(playerId, discardedTile) {
+    // 捨て牌リストを更新
+    discardedTiles[playerId] = discardedTile; // ここで牌の文字列を格納
+
     PLAYER_IDS.forEach(otherPlayerId => {
         if (otherPlayerId !== playerId && checkRon(otherPlayerId, playerId)) {
             // ロン可能である場合にtrueにする
@@ -532,6 +590,35 @@ function checkMeld(tiles) {
 
 // --- その他の関数 ---
 
+function unlockAudio() {
+    const dummySound = new Audio();
+    dummySound.src = "Music/silent.mp3";
+    dummySound.preload = 'auto';
+    dummySound.volume = 0;
+
+    // 音声の再生が開始された後に soundUnlocked を true に設定
+    dummySound.onplaying = () => {
+        soundUnlocked = true;
+    };
+
+    dummySound.play().catch(error => {
+        console.error("ダミー音声の再生エラー:", error);
+        // エラーが発生した場合の処理（例：ユーザーに音声を許可するように促す）
+    });
+}
+
+// 音声を再生する関数
+function playSound(sound) {
+    if (soundUnlocked) {
+        sound.currentTime = 0;
+        sound.play().catch(error => {
+            console.error("音声の再生エラー:", error);
+            // エラーが発生した場合の処理（例：ユーザーに音声を許可するように促す）
+        });
+    }
+}
+
+
 /**
  * 配列をシャッフルする
  * @param {Array} array シャッフルする配列
@@ -564,11 +651,14 @@ function drawTile(playerId) {
 
     if (allTiles.length > 0) {
         const tile = allTiles.pop();
-        addTileToHand(playerId, tile);
+        // ツモ牌として追加することを明示的に伝える
+        addTileToHand(playerId, tile, true);
         // 残り牌数を減らす
         remainingTilesCount--;
         // 残り牌数の表示を更新
         updateRemainingTilesDisplay();
+        // ツモ音を再生
+        playSound(dahaiSound);
 
         // 残り牌数が0枚になったらゲーム終了
         if (remainingTilesCount == 0) {
@@ -681,7 +771,8 @@ function hideAllSkipButtons() {
  */
 function getHandTiles(playerId) {
     const playerHandElement = playerHandElements[playerId];
-    return Array.from(playerHandElement.children).map(tileDiv => tileDiv.textContent);
+    // querySelectorAll('img') を使って、すべての img 要素を取得
+    return Array.from(playerHandElement.querySelectorAll('img')).map(imgElement => imgElement.alt);
 }
 
 // --- イベントリスナー ---
