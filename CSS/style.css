@@ -1,11 +1,43 @@
 body {
     font-family: Arial, sans-serif;
     text-align: center;
-    background-color: #3a913a;
-    /* 麻雀台っぽい緑色 */
     margin: 0;
     padding: 0;
     overflow: hidden;
+}
+
+body,
+html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    /* はみ出したコンテンツを非表示にする */
+    background-color: #000000;
+    /* 背景色 */
+}
+
+.content {
+    /* アプリのコンテンツ */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#app-container {
+    /* アプリ全体を囲むコンテナ */
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('../Picture/麻雀マット.png');
+    /* 背景画像をapp-containerに設定 */
+    background-size: cover;
+    /* 画像を全体に表示 */
+    background-repeat: no-repeat;
+    /* 画像の繰り返しなし */
 }
 
 .tile {
@@ -231,12 +263,23 @@ body {
     /* 半透明の背景 */
     padding: 10px;
     border-radius: 5px;
+
+    /* 16:9の比率でサイズ指定 */
+    width: 10%;
+    /* #app-container に対する幅の割合 */
+    padding-top: 5%;
+    /* padding-top で高さを幅に合わせる */
 }
 
 /* 残り牌数のテキストスタイル */
 #remaining-tiles {
     font-size: 24px;
     font-weight: bold;
+    position: absolute;
+    /* テキストの位置調整 */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 /* 他のスタイル */
