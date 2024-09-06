@@ -18,15 +18,6 @@ html {
     /* 背景色 */
 }
 
-.content {
-    /* アプリのコンテンツ */
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
 #app-container {
     /* アプリ全体を囲むコンテナ */
     position: relative;
@@ -42,10 +33,10 @@ html {
 
 .tile {
     /* 他のスタイル */
-    width: 60px;
-    /* 例: 牌の幅 */
-    height: 80px;
-    /* 例: 牌の高さ */
+    width: 4vw;
+    /* 画面幅の4% */
+    height: 6vw;
+    /* 画面幅の6% */
 }
 
 .tile img {
@@ -53,6 +44,14 @@ html {
     height: 100%;
     object-fit: contain;
     /* 画像を適切なサイズに調整 */
+}
+
+.discarded-tile {
+    /* 他のスタイル */
+    width: 3vw;
+    /* 画面幅の3% */
+    height: 4.5vw;
+    /* 画面幅の4.5% */
 }
 
 .player-container {
@@ -76,44 +75,121 @@ html {
 }
 
 .player-discarded {
-    display: flex;
-    flex-wrap: nowrap;
     position: absolute;
-    top: -80px;
-    width: 100%;
-    justify-content: center;
+    /* #app-container を基準とした絶対位置指定 */
+    width: 30%;
+    /* #app-container に対する幅の割合 */
+    max-width: 420px;
+    /* 最大幅を制限 */
+    padding-top: calc(30% * (9 / 16));
+    display: grid;
+    /* grid layout を使う */
+    grid-template-rows: repeat(4, 3.7vw);
+    /* 4行のグリッドを定義 */
+    grid-template-columns: repeat(7, 1fr);
+    /* 7列のグリッドを定義 */
+    gap: 0px;
+    /* 牌の間隔 */
+    width: 21vw;
+    /* #app-container に対する幅の割合 */
+
+    /* 16:9の比率を維持 */
+    /* 各プレイヤーの捨て牌エリアの位置を調整 */
+    /* 例：下側のプレイヤーの捨て牌 */
+    &#bottom-discarded {
+        top: 0%;
+        /* #app-container 上端からの距離 */
+        left: 50%;
+        transform: translateX(-50%);
+        /* 水平方向の中央揃え */
+    }
+
+    /* 例：左側のプレイヤーの捨て牌 */
+    &#left-discarded {
+        top: 0%;
+        left: 0%;
+        transform: translateY(-50%);
+    }
+
+    /* 例：右側のプレイヤーの捨て牌 */
+    &#right-discarded {
+        top: 0%;
+        right: 0%;
+        transform: translateY(-50%);
+    }
+
+    /* 例：上側のプレイヤーの捨て牌 */
+    &#top-discarded {
+        top: 0%;
+        /* #app-container 上端からの距離 */
+        left: 50%;
+        transform: translateX(-50%);
+    }
 }
 
 /* 自分の手牌（画面の下側） */
 #bottom-player {
-    bottom: 200px;
+    position: absolute;
+    /* 絶対位置指定 */
     left: 50%;
+    bottom: 2%;
+    /* #app-container下端からの距離 */
     transform: translateX(-50%);
+    /* 水平方向の中央揃え */
+    width: 40%;
+    /* #app-container に対する幅の割合 */
+    padding-top: calc(40% * (9 / 16));
+    /* 16:9の比率を維持 */
 }
 
 /* 左側の手牌（画面の左側） */
 #left-player {
-    left: 20px;
+    position: absolute;
+    /* 絶対位置指定 */
+    left: -5%;
     top: 50%;
+    /* #app-containerからの距離 */
     transform: translateY(-50%) rotate(90deg);
     transform-origin: bottom right;
+    /* 水平方向の中央揃え */
+    width: 20%;
+    /* #app-container に対する幅の割合 */
+    padding-top: calc(20% * (9 / 16));
+    /* 16:9の比率を維持 */
 }
 
 /* 右側の手牌（画面の右側） */
 #right-player {
-    right: 20px;
+    position: absolute;
+    /* 絶対位置指定 */
+    right: -5%;
     top: 50%;
+    /* #app-containerからの距離 */
     transform: translateY(-50%) rotate(-90deg);
     transform-origin: bottom left;
+    /* 水平方向の中央揃え */
+    width: 20%;
+    /* #app-container に対する幅の割合 */
+    padding-top: calc(20% * (9 / 16));
+    /* 16:9の比率を維持 */
 }
 
 /* 上部の手牌（画面の上側） */
 #top-player {
-    top: 20px;
+    position: absolute;
+    /* 絶対位置指定 */
+    top: -50%;
     left: 50%;
+    /* #app-containerからの距離 */
     transform: translateX(-50%) rotate(180deg);
     transform-origin: bottom center;
+    /* 水平方向の中央揃え */
+    width: 40%;
+    /* #app-container に対する幅の割合 */
+    padding-top: calc(40% * (9 / 16));
+    /* 16:9の比率を維持 */
 }
+
 
 #main {
     position: relative;
@@ -263,7 +339,6 @@ html {
     /* 半透明の背景 */
     padding: 10px;
     border-radius: 5px;
-
     /* 16:9の比率でサイズ指定 */
     width: 10%;
     /* #app-container に対する幅の割合 */
@@ -282,10 +357,21 @@ html {
     transform: translate(-50%, -50%);
 }
 
-/* 他のスタイル */
-
 /* ツモ牌の左側に隙間を追加 */
 .player-hand .tile.tsumo-tile {
     margin-left: 10px;
     /* 隙間のサイズを調整 */
+}
+
+#mute-button {
+    position: absolute;
+    bottom: 10px;
+    /* 下端からの距離 */
+    right: 10px;
+    /* 右端からの距離 */
+    padding: 5px 10px;
+    background-color: #ccc;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }

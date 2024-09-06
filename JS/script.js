@@ -30,11 +30,32 @@ let remainingTilesElement = null; // 残り牌数を表示する要素をキャ�
 const dahaiSound = document.getElementById("dahaiSound");
 let soundUnlocked = false;
 
+// ミュートボタンの要素を取得
+const muteButton = document.getElementById('mute-button');
+
+// 音声のオン/オフ状態を管理する変数
+let isMuted = false;
+
 // ユーザーインタラクションを待ってからダミー音声を読み込む
 document.addEventListener('click', () => {
     if (!soundUnlocked) {
         unlockAudio();
     }
+});
+
+// ミュートボタンのクリックイベントリスナー
+muteButton.addEventListener('click', () => {
+    // 音声のオン/オフ状態を切り替える
+    isMuted = !isMuted;
+
+    // すべての音声要素に対してミュート状態を適用
+    const audioElements = document.querySelectorAll('audio');
+    audioElements.forEach(audio => {
+        audio.muted = isMuted;
+    });
+
+    // ボタンのテキストを変更
+    muteButton.textContent = isMuted ? 'ミュートを戻す' : 'ミュートする';
 });
 
 // --- 牌の操作に関する関数 ---
@@ -44,9 +65,14 @@ document.addEventListener('click', () => {
  * @param {string} tile 牌の文字列表現 (例: "1萬")
  * @returns {HTMLDivElement} 牌を表すHTMLDiv要素
  */
-function createTileElement(tile) {
+function createTileElement(tile, isDiscarded = false) {
     const tileElement = document.createElement('div');
     tileElement.className = 'tile';
+
+    // 捨て牌の場合、discarded-tileクラスを追加
+    if (isDiscarded) {
+        tileElement.classList.add('discarded-tile');
+    }
 
     // 牌の画像を追加
     const imgElement = document.createElement('img');
@@ -136,7 +162,7 @@ function addTileToDiscarded(playerId, tile) {
         console.error(`Element with ID ${playerId}-discarded not found.`);
         return;
     }
-    const discardedTileElement = createTileElement(tile);
+    const discardedTileElement = createTileElement(tile, true); // 捨て牌であることを指定
     playerDiscardedElement.appendChild(discardedTileElement);
 
     // 捨て牌リストを更新
@@ -371,13 +397,14 @@ function handleRonCheck(playerId, discardedTile) {
             setupRonButtonListener(otherPlayerId);
 
             // スキップボタンのイベントリスナーを設定
-            setupRonSkipButtonListener(otherPlayerId);
+            setupSkipButtonListener(otherPlayerId, false);
         }
     }
     // ロン可能でなかった場合、ターンを終了
     if (!isRonPossible) {
         endTurn();
     }
+    isRonPossible = false;
 }
 
 /**
@@ -452,7 +479,7 @@ function checkTsumo(playerId) {
         skipButtons[playerId].style.display = 'block';
 
         // スキップボタンのイベントリスナーを設定
-        setupTsumoSkipButtonListener(playerId);
+        setupSkipButtonListener(playerId, true);
 
         return true;
     }
@@ -705,48 +732,46 @@ function showRonButtons(playerId) {
     skipButtons[playerId].style.display = 'block';
 }
 
+// handleSkip を呼び出す関数を定義
+function handleSkipClick(isTsumo) {
+    handleSkip(isTsumo);
+}
+
 /**
- * ロンのスキップボタンのイベントリスナーを設定する
+ * スキップボタンのイベントリスナーを設定する
  * @param {string} playerId プレイヤーID
+ * @param {boolean} isTsumo ツモかどうか
  */
-function setupRonSkipButtonListener(playerId) {
-    // 既存のイベントリスナーを削除
+function setupSkipButtonListener(playerId, isTsumo) {
     const skipButton = skipButtons[playerId];
-    skipButton.removeEventListener('click', handleRonSkip);
+
+    // handleSkipClick を指定して削除
+    skipButton.removeEventListener('click', handleSkipClick);
 
     // 新しいイベントリスナーを設定
-    skipButton.addEventListener('click', handleRonSkip);
-}
-
-// イベントリスナー関数を独立させる
-function handleRonSkip() {
-    // ロンボタン、ツモボタン、スキップボタンを非表示
-    hideAllRonButtons();
-    hideAllSkipButtons();
-
-    // スキップしたらターンを進める
-    endTurn();
-    // スキップしたらfalseにする
-    isRonPossible = false;
+    // handleSkipClick を指定して登録
+    skipButton.addEventListener('click', () => {
+        handleSkipClick(isTsumo);
+        // イベントリスナーを削除
+        skipButton.removeEventListener('click', handleSkipClick);
+    });
 }
 
 /**
- * ツモのスキップボタンのイベントリスナーを設定する
- * @param {string} playerId プレイヤーID
+ * スキップボタンがクリックされた時の処理
+ * @param {boolean} isTsumo ツモかどうか
  */
-function setupTsumoSkipButtonListener(playerId) {
-    skipButtons[playerId].addEventListener('click', () => {
-        // 既存のロンイベントリスナーを削除
-        const skipButton = skipButtons[playerId];
-        skipButton.removeEventListener('click', handleRonSkip);
+function handleSkip(isTsumo) {
+    // ロンボタン、ツモボタン、スキップボタンを非表示
+    hideAllRonButtons();
+    hideAllTsumoButtons();
+    hideAllSkipButtons();
 
-        // 新しいロンイベントリスナーを設定
-        skipButton.addEventListener('click', handleRonSkip);
-
-        // ボタン類は非表示にする
-        hideAllTsumoButtons();
-        hideAllSkipButtons();
-    });
+    // ロンでスキップしたらターンを進める
+    if (!isTsumo) {
+        endTurn();
+    }
+    isRonPossible = false;
 }
 
 /**
