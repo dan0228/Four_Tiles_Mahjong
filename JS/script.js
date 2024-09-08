@@ -13,6 +13,7 @@ let currentPlayerIndex = 0;
 let isRonDeclared = false; // ロン宣言
 let isRonPossible = false; // ロン可能
 let remainingTilesCount = 136; // 残り牌数
+let isRonSkip = false; // ロンスキップ
 
 // 牌の情報を格納する変数
 let allTiles = [];
@@ -374,7 +375,10 @@ function handleTileClick(playerId, tile, tileElement) {
  * @param {string} playerId 牌を捨てたプレイヤーID
  * @param {string} discardedTile 捨てられた牌の文字列
  */
-function handleRonCheck(playerId, discardedTile) {
+async function handleRonCheck(playerId, discardedTile) {
+    // ロン判定前にフラグをリセット
+    isRonSkip = false;
+
     // 捨て牌リストを更新
     discardedTiles[playerId] = discardedTile;
 
@@ -398,13 +402,23 @@ function handleRonCheck(playerId, discardedTile) {
 
             // スキップボタンのイベントリスナーを設定
             setupSkipButtonListener(otherPlayerId, false);
+
+            // ロン判定がTrueになったらループを抜ける(頭ハネ)
+            break;
         }
     }
-    // ロン可能でなかった場合、ターンを終了
-    if (!isRonPossible) {
+
+    while (isRonPossible && !isRonSkip) {
+        // 一定時間待機 (ブラウザがフリーズしないように)
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // ロン可能出なかった場合もしくは、ロン可能でスキップした場合、ターンを終了
+    if (!isRonPossible || isRonSkip) {
         endTurn();
     }
     isRonPossible = false;
+    isRonSkip = false;
 }
 
 /**
@@ -745,15 +759,12 @@ function handleSkipClick(isTsumo) {
 function setupSkipButtonListener(playerId, isTsumo) {
     const skipButton = skipButtons[playerId];
 
-    // handleSkipClick を指定して削除
+    // 既存のイベントリスナーを削除
     skipButton.removeEventListener('click', handleSkipClick);
 
     // 新しいイベントリスナーを設定
-    // handleSkipClick を指定して登録
     skipButton.addEventListener('click', () => {
-        handleSkipClick(isTsumo);
-        // イベントリスナーを削除
-        skipButton.removeEventListener('click', handleSkipClick);
+        handleSkip(isTsumo);
     });
 }
 
@@ -769,9 +780,8 @@ function handleSkip(isTsumo) {
 
     // ロンでスキップしたらターンを進める
     if (!isTsumo) {
-        endTurn();
+        isRonSkip = true;
     }
-    isRonPossible = false;
 }
 
 /**
