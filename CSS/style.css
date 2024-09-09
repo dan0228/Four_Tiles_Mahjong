@@ -33,10 +33,10 @@ html {
 
 .tile {
     /* 他のスタイル */
-    width: 4vw;
-    /* 画面幅の4% */
-    height: 6vw;
-    /* 画面幅の6% */
+    width: 10%;
+    /* 親要素の幅に対する割合 */
+    height: 14%;
+    /* 16:9の比率を維持 */
 }
 
 .tile img {
@@ -48,10 +48,9 @@ html {
 
 .discarded-tile {
     /* 他のスタイル */
-    width: 3vw;
-    /* 画面幅の3% */
-    height: 4.5vw;
-    /* 画面幅の4.5% */
+    width: 100%;
+    /* 親要素の幅に対する割合 */
+    height: 100%;
 }
 
 .player-container {
@@ -72,58 +71,49 @@ html {
     flex-wrap: nowrap;
     margin: 0;
     padding: 0;
+    width: 40%;
+    /* #app-container の幅に対する割合 */
 }
 
 .player-discarded {
     position: absolute;
-    /* #app-container を基準とした絶対位置指定 */
-    width: 30%;
-    /* #app-container に対する幅の割合 */
-    max-width: 420px;
-    /* 最大幅を制限 */
-    padding-top: calc(30% * (9 / 16));
+    display: flex;
+    flex-wrap: nowrap;
+    margin: 0;
+    padding: 0;
+    width: 20%;
     display: grid;
     /* grid layout を使う */
-    grid-template-rows: repeat(4, 3.7vw);
+    grid-template-rows: repeat(4, 1fr);
     /* 4行のグリッドを定義 */
     grid-template-columns: repeat(7, 1fr);
     /* 7列のグリッドを定義 */
     gap: 0px;
     /* 牌の間隔 */
-    width: 21vw;
-    /* #app-container に対する幅の割合 */
 
-    /* 16:9の比率を維持 */
     /* 各プレイヤーの捨て牌エリアの位置を調整 */
     /* 例：下側のプレイヤーの捨て牌 */
     &#bottom-discarded {
-        top: 0%;
-        /* #app-container 上端からの距離 */
-        left: 50%;
-        transform: translateX(-50%);
-        /* 水平方向の中央揃え */
+        top: 30%;
+        left: 28%;
     }
 
     /* 例：左側のプレイヤーの捨て牌 */
     &#left-discarded {
-        top: 0%;
-        left: 0%;
-        transform: translateY(-50%);
+        top: -53%;
+        left: 27%;
     }
 
     /* 例：右側のプレイヤーの捨て牌 */
     &#right-discarded {
-        top: 0%;
-        right: 0%;
-        transform: translateY(-50%);
+        top: -53%;
+        right: 50%;
     }
 
     /* 例：上側のプレイヤーの捨て牌 */
     &#top-discarded {
-        top: 0%;
-        /* #app-container 上端からの距離 */
-        left: 50%;
-        transform: translateX(-50%);
+        top: 30%;
+        left: 28%;
     }
 }
 
@@ -131,14 +121,14 @@ html {
 #bottom-player {
     position: absolute;
     /* 絶対位置指定 */
-    left: 50%;
+    left: 62%;
     bottom: 2%;
     /* #app-container下端からの距離 */
     transform: translateX(-50%);
     /* 水平方向の中央揃え */
-    width: 40%;
+    width: 100%;
     /* #app-container に対する幅の割合 */
-    padding-top: calc(40% * (9 / 16));
+    padding-top: calc(46% * (9 / 16));
     /* 16:9の比率を維持 */
 }
 
@@ -146,15 +136,15 @@ html {
 #left-player {
     position: absolute;
     /* 絶対位置指定 */
-    left: -5%;
-    top: 50%;
+    left: -90%;
+    top: 145%;
     /* #app-containerからの距離 */
     transform: translateY(-50%) rotate(90deg);
     transform-origin: bottom right;
     /* 水平方向の中央揃え */
-    width: 20%;
+    width: 100%;
     /* #app-container に対する幅の割合 */
-    padding-top: calc(20% * (9 / 16));
+    padding-top: calc(25% * (9 / 16));
     /* 16:9の比率を維持 */
 }
 
@@ -162,15 +152,15 @@ html {
 #right-player {
     position: absolute;
     /* 絶対位置指定 */
-    right: -5%;
-    top: 50%;
+    right: -90%;
+    top: 104%;
     /* #app-containerからの距離 */
     transform: translateY(-50%) rotate(-90deg);
     transform-origin: bottom left;
     /* 水平方向の中央揃え */
-    width: 20%;
+    width: 100%;
     /* #app-container に対する幅の割合 */
-    padding-top: calc(20% * (9 / 16));
+    padding-top: calc(25% * (9 / 16));
     /* 16:9の比率を維持 */
 }
 
@@ -178,15 +168,15 @@ html {
 #top-player {
     position: absolute;
     /* 絶対位置指定 */
-    top: -50%;
-    left: 50%;
+    top: -54%;
+    left: 38%;
     /* #app-containerからの距離 */
     transform: translateX(-50%) rotate(180deg);
     transform-origin: bottom center;
     /* 水平方向の中央揃え */
-    width: 40%;
+    width: 100%;
     /* #app-container に対する幅の割合 */
-    padding-top: calc(40% * (9 / 16));
+    padding-top: calc(46% * (9 / 16));
     /* 16:9の比率を維持 */
 }
 
@@ -340,10 +330,10 @@ html {
     padding: 10px;
     border-radius: 5px;
     /* 16:9の比率でサイズ指定 */
+    aspect-ratio: 16 / 9;
+    /* 16:9の比率を指定 */
     width: 10%;
     /* #app-container に対する幅の割合 */
-    padding-top: 5%;
-    /* padding-top で高さを幅に合わせる */
 }
 
 /* 残り牌数のテキストスタイル */
