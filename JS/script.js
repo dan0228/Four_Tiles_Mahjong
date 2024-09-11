@@ -33,6 +33,10 @@ let soundUnlocked = false;
 
 // ミュートボタンの要素を取得
 const muteButton = document.getElementById('mute-button');
+// ミュートボタンの画像要素を作成
+const muteButtonImage = document.createElement('img');
+muteButtonImage.src = 'Picture/ミュート解除.png'; // 初期状態の画像を設定
+muteButton.appendChild(muteButtonImage); // 画像をボタンに追加
 
 // 音声のオン/オフ状態を管理する変数
 let isMuted = false;
@@ -55,8 +59,8 @@ muteButton.addEventListener('click', () => {
         audio.muted = isMuted;
     });
 
-    // ボタンのテキストを変更
-    muteButton.textContent = isMuted ? 'ミュートを戻す' : 'ミュートする';
+    // ボタンの画像を変更
+    muteButtonImage.src = isMuted ? 'Picture/ミュート.png' : 'Picture/ミュート解除.png';
 });
 
 // --- 牌の操作に関する関数 ---
