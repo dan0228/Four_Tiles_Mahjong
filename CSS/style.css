@@ -1,11 +1,3 @@
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-}
-
 body,
 html {
     width: 100%;
@@ -13,9 +5,9 @@ html {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    /* はみ出したコンテンツを非表示にする */
     background-color: #000000;
-    /* 背景色 */
+    font-family: Arial, sans-serif;
+    text-align: center;
 }
 
 #app-container {
@@ -24,32 +16,23 @@ html {
     width: 100vw;
     height: 100vh;
     background-image: url('../Picture/麻雀マット.png');
-    /* 背景画像をapp-containerに設定 */
     background-size: cover;
-    /* 画像を全体に表示 */
     background-repeat: no-repeat;
-    /* 画像の繰り返しなし */
 }
 
 .tile {
-    /* 他のスタイル */
     width: 10%;
-    /* 親要素の幅に対する割合 */
     height: 14%;
-    /* 16:9の比率を維持 */
 }
 
 .tile img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    /* 画像を適切なサイズに調整 */
 }
 
 .discarded-tile {
-    /* 他のスタイル */
     width: 100%;
-    /* 親要素の幅に対する割合 */
     height: 100%;
 }
 
@@ -69,136 +52,87 @@ html {
 .player-hand {
     display: flex;
     flex-wrap: nowrap;
-    margin: 0;
-    padding: 0;
     width: 40%;
-    /* #app-container の幅に対する割合 */
 }
 
 .player-discarded {
     position: absolute;
-    display: flex;
-    flex-wrap: nowrap;
-    margin: 0;
-    padding: 0;
-    width: 20%;
     display: grid;
-    /* grid layout を使う */
     grid-template-rows: repeat(4, 1fr);
-    /* 4行のグリッドを定義 */
     grid-template-columns: repeat(7, 1fr);
-    /* 7列のグリッドを定義 */
     gap: 0px;
-    /* 牌の間隔 */
+    width: 20%;
 
     /* 各プレイヤーの捨て牌エリアの位置を調整 */
-    /* 例：下側のプレイヤーの捨て牌 */
     &#bottom-discarded {
         top: 30%;
         left: 30%;
     }
 
-    /* 例：左側のプレイヤーの捨て牌 */
     &#left-discarded {
         top: -53%;
         left: 30%;
     }
 
-    /* 例：右側のプレイヤーの捨て牌 */
     &#right-discarded {
         top: -53%;
         right: 50%;
     }
 
-    /* 例：上側のプレイヤーの捨て牌 */
     &#top-discarded {
         top: 30%;
         left: 30%;
     }
 }
 
-/* 自分の手牌（画面の下側） */
+/* プレイヤーの位置指定 */
 #bottom-player {
     position: absolute;
-    /* 絶対位置指定 */
     left: 60%;
     bottom: 2%;
-    /* #app-container下端からの距離 */
     transform: translateX(-50%);
-    /* 水平方向の中央揃え */
     width: 100%;
-    /* #app-container に対する幅の割合 */
     padding-top: calc(46% * (9 / 16));
-    /* 16:9の比率を維持 */
 }
 
-/* 左側の手牌（画面の左側） */
 #left-player {
     position: absolute;
-    /* 絶対位置指定 */
     left: -84%;
     top: 143%;
-    /* #app-containerからの距離 */
     transform: translateY(-50%) rotate(90deg);
     transform-origin: bottom right;
-    /* 水平方向の中央揃え */
     width: 100%;
-    /* #app-container に対する幅の割合 */
     padding-top: calc(17% * (9 / 16));
-    /* 16:9の比率を維持 */
 }
 
-/* 右側の手牌（画面の右側） */
 #right-player {
     position: absolute;
-    /* 絶対位置指定 */
     right: -84%;
     top: 108%;
-    /* #app-containerからの距離 */
     transform: translateY(-50%) rotate(-90deg);
     transform-origin: bottom left;
-    /* 水平方向の中央揃え */
     width: 100%;
-    /* #app-container に対する幅の割合 */
     padding-top: calc(17% * (9 / 16));
-    /* 16:9の比率を維持 */
 }
 
-/* 上部の手牌（画面の上側） */
 #top-player {
     position: absolute;
-    /* 絶対位置指定 */
     top: -54%;
     left: 40%;
-    /* #app-containerからの距離 */
     transform: translateX(-50%) rotate(180deg);
     transform-origin: bottom center;
-    /* 水平方向の中央揃え */
     width: 100%;
-    /* #app-container に対する幅の割合 */
     padding-top: calc(46% * (9 / 16));
-    /* 16:9の比率を維持 */
 }
 
-
-#main {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-}
-
-/* 萬子を赤色に */
 .tile.manzu {
     color: red;
 }
 
-/* 筒子を青色に */
 .tile.pinzu {
     color: blue;
 }
 
-/* 索子を緑色に */
 .tile.sozu {
     color: green;
 }
@@ -318,22 +252,15 @@ html {
 /* ゲーム情報エリアのスタイル */
 #game-info {
     position: absolute;
-    /* 絶対位置指定 */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    /* 中央寄せ */
     z-index: 10;
-    /* 他の要素より手前に表示 */
     background-color: rgba(255, 255, 255, 0.8);
-    /* 半透明の背景 */
     padding: 10px;
     border-radius: 5px;
-    /* 16:9の比率でサイズ指定 */
-    aspect-ratio: 16 / 9;
-    /* 16:9の比率を指定 */
+    padding-top: calc(9 / 16 * 10%);
     width: 10%;
-    /* #app-container に対する幅の割合 */
 }
 
 /* 残り牌数のテキストスタイル */
@@ -341,7 +268,6 @@ html {
     font-size: 24px;
     font-weight: bold;
     position: absolute;
-    /* テキストの位置調整 */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -350,15 +276,12 @@ html {
 /* ツモ牌の左側に隙間を追加 */
 .player-hand .tile.tsumo-tile {
     margin-left: 10px;
-    /* 隙間のサイズを調整 */
 }
 
 #mute-button {
     position: absolute;
     bottom: 10px;
-    /* 下端からの距離 */
     right: 10px;
-    /* 右端からの距離 */
     padding: 5px 10px;
     background-color: #ccc;
     border: none;
