@@ -10,10 +10,16 @@ const PLAYER_IDS = ['left', 'bottom', 'right', 'top'];
 // ゲームの状態を表す変数
 let gameStarted = false;
 let currentPlayerIndex = 0;
-let isRonDeclared = false; // ロン宣言
+let isDeclared = false; // ロン宣言
 let isRonPossible = false; // ロン可能
 let remainingTilesCount = 136; // 残り牌数
 let isRonSkip = false; // ロンスキップ
+let isDealerHola = false; // 親和了
+let isRoundEnding = false; // 局の終了処理中かどうかを示すフラグ
+
+// 局数と親の順番を管理する変数を追加
+let currentRound = 1; // 現在の局数
+let dealerIndex = Math.floor(Math.random() * PLAYER_IDS.length); // 親のインデックス
 
 // 牌の情報を格納する変数
 let allTiles = [];
@@ -220,23 +226,22 @@ function initializeGame() {
     // 牌の初期化
     initializeTiles();
 
-    // 残り牌数を初期化
-    remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
-
     // DOM要素をキャッシュ
     cacheDOMElements();
 
     // 残り牌数の表示を更新
     updateRemainingTilesDisplay();
 
-    // ランダムに親を決定
-    currentPlayerIndex = Math.floor(Math.random() * PLAYER_IDS.length);
+    // 親を初期化
+    dealerIndex = Math.floor(Math.random() * PLAYER_IDS.length);
+    currentPlayerIndex = dealerIndex; // 最初の親はランダムに決定
 
     // 各プレイヤーに初期手牌を配る
     PLAYER_IDS.forEach((playerId, index) => {
         generateInitialHand(playerId);
     });
-    remainingTilesCount = remainingTilesCount - 4 * PLAYER_IDS.length;
+    // 残り牌数を初期化
+    remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
 
     // 最初のターンを開始
     startGame();
@@ -302,16 +307,76 @@ function startGame() {
  * ゲーム終了時の処理
  */
 function handleGameEnd() {
+    console.log(`ゲーム終了しました。`);
     // ゲーム終了のフラグを立てる
     gameStarted = false;
-
-    // 全てのボタンを非表示にする
-    hideAllTsumoButtons();
-    hideAllRonButtons();
-    hideAllSkipButtons();
-
     // TODO: ゲーム終了時の処理を実装 (例: 結果表示など)
-    console.log("ゲーム終了");
+}
+
+/**
+ * 次の局に進む処理
+ */
+async function proceedToNextRound() {
+    // 既に局の終了処理中であれば、処理を中断
+    if (isRoundEnding) {
+        return;
+    }
+
+    // 局の終了処理中であることを示す
+    isRoundEnding = true;
+
+    // ロンが成立したらhandleRonCheck関数が終了してから後続処理が行われるようループ
+    while (isDeclared) {
+        // 一定時間待機 (ブラウザがフリーズしないように)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    if (!isDealerHola) {
+        currentRound++;
+        dealerIndex = (dealerIndex + 1) % PLAYER_IDS.length; // 親を反時計回りに移動
+        currentPlayerIndex = dealerIndex; // 次の親からスタート
+        isDealerHola = false;
+    }
+
+    // フラグの初期化
+    isRonPossible = false;
+    isRonSkip = false;
+    isDealerHola = false;
+    isDeclared = false;
+
+    // 牌を初期化
+    initializeTiles();
+
+    // 各プレイヤーの手牌をリセット
+    PLAYER_IDS.forEach(playerId => {
+        playerHandElements[playerId].innerHTML = ''; // 手牌をクリア
+    });
+
+    // 捨て牌エリアをリセット
+    PLAYER_IDS.forEach(playerId => {
+        playerDiscardedElements[playerId].innerHTML = ''; // 捨て牌をクリア
+    });
+    discardedTiles = {}; // 捨て牌情報をリセット
+
+    // 残り牌数を初期化
+    remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
+    updateRemainingTilesDisplay();
+
+    // 各プレイヤーに初期手牌を配る
+    PLAYER_IDS.forEach((playerId, index) => {
+        generateInitialHand(playerId);
+    });
+
+    // 新しい局を開始
+    if (currentRound < 5) { // 4局未満なら次の局を開始（先に局数をインクリメントしているため5）
+        console.log(`局が終了しました。${currentRound}局目に移ります。`);
+        startGame();
+    } else { // 4局終了したらゲーム終了
+        handleGameEnd();
+    }
+
+    // 局の終了処理が完了
+    isRoundEnding = false;
 }
 
 /**
@@ -321,7 +386,9 @@ function handleGameEnd() {
 function startTurn(playerId) {
     // 牌を引く
     drawTile(playerId);
-
+    if (isDeclared) {
+        return;
+    }
     // ツモ判定を行う
     checkTsumo(playerId);
 }
@@ -349,7 +416,7 @@ function endTurn() {
     currentPlayerIndex = (currentPlayerIndex + 1) % PLAYER_IDS.length;
 
     // 次のプレイヤーのターンを開始
-    if (gameStarted) {
+    if (!isDeclared) {
         startTurn(getCurrentPlayerId());
     }
 }
@@ -413,11 +480,18 @@ async function handleRonCheck(playerId, discardedTile) {
     }
 
     while (isRonPossible && !isRonSkip) {
+        // ロンが成立したら関数を終了
+        if (isDeclared) {
+            isDeclared = false;
+            isRonPossible = false;
+            isRonSkip = false;
+            return;
+        }
         // 一定時間待機 (ブラウザがフリーズしないように)
         await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // ロン可能出なかった場合もしくは、ロン可能でスキップした場合、ターンを終了
+    // ロン可能出なかった場合もしくはロン可能でスキップした場合にターンを終了
     if (!isRonPossible || isRonSkip) {
         endTurn();
     }
@@ -432,7 +506,7 @@ async function handleRonCheck(playerId, discardedTile) {
 function setupRonButtonListener(playerId) {
     ronButtons[playerId].addEventListener('click', () => {
         // ロン宣言済み
-        isRonDeclared = ture;
+        isDeclared = true;
 
         // ロンボタン、ツモボタン、スキップボタンを非表示
         hideAllRonButtons();
@@ -450,6 +524,9 @@ function setupRonButtonListener(playerId) {
  */
 function setupTsumoButtonListener(playerId) {
     tsumoButtons[playerId].addEventListener('click', () => {
+        // ツモ宣言済み
+        isDeclared = true;
+
         // ツモボタンとスキップボタンを非表示
         hideAllTsumoButtons();
         hideAllSkipButtons();
@@ -464,10 +541,19 @@ function setupTsumoButtonListener(playerId) {
  * @param {string} playerId ロンを宣言したプレイヤーID
  */
 function handleRon(playerId) {
-    // TODO: ロン処理の実装
     console.log(`${playerId} がロンしました！`);
 
-    // TODO: ゲームを続行するか終了するかを決める処理を追加
+    // 親がロンした場合、親は変わらず次の局へは進まない
+    if (playerId === PLAYER_IDS[dealerIndex]) {
+        console.log("親がロンしたため、局は継続です。");
+        isDealerHola = true;
+    }
+    // proceedToNextRound() の完了後に isRoundEnding を false に戻す
+    if (!isRoundEnding) {
+        proceedToNextRound().then(() => {
+            isRoundEnding = false;
+        });
+    }
 }
 
 /**
@@ -475,10 +561,19 @@ function handleRon(playerId) {
  * @param {string} playerId ツモを宣言したプレイヤーID
  */
 function handleTsumo(playerId) {
-    // TODO: ツモ処理の実装
     console.log(`${playerId} がツモしました！`);
 
-    // TODO: ゲームを続行するか終了するかを決める処理を追加
+    // 親がツモした場合、親は変わらず次の局へは進まない
+    if (playerId === PLAYER_IDS[dealerIndex]) {
+        console.log("親がツモしたため、局は継続です。");
+        isDealerHola = true;
+    }
+    // proceedToNextRound() の完了後に isRoundEnding を false に戻す
+    if (!isRoundEnding) {
+        proceedToNextRound().then(() => {
+            isRoundEnding = false;
+        });
+    }
 }
 
 // --- 判定に関する関数 ---
@@ -700,16 +795,20 @@ function drawTile(playerId) {
         const tile = allTiles.pop();
         // ツモ牌として追加することを明示的に伝える
         addTileToHand(playerId, tile, true);
-        // 残り牌数を減らす
-        remainingTilesCount--;
+        if (isDeclared) {
+            return;
+        }
+        // 残り牌数を更新
+        remainingTilesCount = allTiles.length - 13;
         // 残り牌数の表示を更新
         updateRemainingTilesDisplay();
         // ツモ音を再生
         playSound(dahaiSound);
 
-        // 残り牌数が0枚になったらゲーム終了
+        // 残り牌数が0枚になったら局終了
         if (remainingTilesCount == 0) {
-            handleGameEnd();
+            console.log("流局です。次の局に進みます。");
+            proceedToNextRound();
         }
     }
 }
