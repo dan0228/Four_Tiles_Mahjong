@@ -245,6 +245,26 @@ function initializeGame() {
 
     // 最初のターンを開始
     startGame();
+
+    // 初回のゲーム開始時に画像を設定
+    const gameInfoImage = document.getElementById('game-info-image');
+    switch (PLAYER_IDS[dealerIndex]) {
+        case 'bottom':
+            gameInfoImage.src = 'Picture/info_bottom.png';
+            break;
+        case 'left':
+            gameInfoImage.src = 'Picture/info_left.png';
+            break;
+        case 'right':
+            gameInfoImage.src = 'Picture/info_right.png';
+            break;
+        case 'top':
+            gameInfoImage.src = 'Picture/info_top.png';
+            break;
+    }
+    // 局数画像を初期化
+    const roundImage = document.getElementById('round-image');
+    roundImage.src = 'Picture/ton1.png'; // 最初は1局目なのでton1を表示
 }
 
 /**
@@ -290,9 +310,18 @@ function cacheDOMElements() {
  * 残り牌数を表示する要素を更新する
  */
 function updateRemainingTilesDisplay() {
-    if (remainingTilesElement) {
-        remainingTilesElement.textContent = remainingTilesCount;
-    }
+    // 残り牌数の画像を表示する要素を取得
+    const hundredsImage = document.getElementById("remaining-tiles-hundreds");
+    const tensImage = document.getElementById("remaining-tiles-tens");
+    const onesImage = document.getElementById("remaining-tiles-ones");
+
+    // 残り牌数を3桁の数値に変換
+    const paddedRemainingTiles = remainingTilesCount.toString().padStart(3, '0');
+
+    // 各桁の画像を設定
+    hundredsImage.src = `Picture/${paddedRemainingTiles[0]}ao.png`;
+    tensImage.src = `Picture/${paddedRemainingTiles[1]}ao.png`;
+    onesImage.src = `Picture/${paddedRemainingTiles[2]}ao.png`;
 }
 
 /**
@@ -375,6 +404,40 @@ async function proceedToNextRound() {
         startGame();
     } else { // 4局終了したらゲーム終了
         handleGameEnd();
+    }
+
+    // 親のプレイヤーIDに応じて画像を変更
+    const gameInfoImage = document.getElementById('game-info-image');
+    const roundImage = document.getElementById('round-image');
+    switch (PLAYER_IDS[dealerIndex]) {
+        case 'bottom':
+            gameInfoImage.src = 'Picture/info_bottom.png';
+            break;
+        case 'left':
+            gameInfoImage.src = 'Picture/info_left.png';
+            break;
+        case 'right':
+            gameInfoImage.src = 'Picture/info_right.png';
+            break;
+        case 'top':
+            gameInfoImage.src = 'Picture/info_top.png';
+            break;
+    }
+
+    // 局数に応じて画像を変更
+    switch (currentRound) {
+        case 1:
+            roundImage.src = 'Picture/ton1.png';
+            break;
+        case 2:
+            roundImage.src = 'Picture/ton2.png';
+            break;
+        case 3:
+            roundImage.src = 'Picture/ton3.png';
+            break;
+        case 4:
+            roundImage.src = 'Picture/ton4.png';
+            break;
     }
 
     // 局の終了処理が完了
