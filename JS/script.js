@@ -331,11 +331,13 @@ async function proceedToNextRound() {
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
+    // 子が和了したか、流局のとき
     if (!isDealerHola) {
         currentRound++;
         dealerIndex = (dealerIndex + 1) % PLAYER_IDS.length; // 親を反時計回りに移動
         currentPlayerIndex = dealerIndex; // 次の親からスタート
-        isDealerHola = false;
+    } else {
+        currentPlayerIndex = dealerIndex; // 親が和了したので親からスタート
     }
 
     // フラグの初期化
@@ -413,10 +415,9 @@ function setupLastTileClickListener(playerId) {
  * 現在のプレイヤーのターンを終了し、次のプレイヤーにターンを移す
  */
 function endTurn() {
-    currentPlayerIndex = (currentPlayerIndex + 1) % PLAYER_IDS.length;
-
     // 次のプレイヤーのターンを開始
     if (!isDeclared) {
+        currentPlayerIndex = (currentPlayerIndex + 1) % PLAYER_IDS.length;
         startTurn(getCurrentPlayerId());
     }
 }
@@ -543,13 +544,13 @@ function setupTsumoButtonListener(playerId) {
 function handleRon(playerId) {
     console.log(`${playerId} がロンしました！`);
 
-    // 親がロンした場合、親は変わらず次の局へは進まない
-    if (playerId === PLAYER_IDS[dealerIndex]) {
-        console.log("親がロンしたため、局は継続です。");
-        isDealerHola = true;
-    }
     // proceedToNextRound() の完了後に isRoundEnding を false に戻す
     if (!isRoundEnding) {
+        // 親がロンした場合、親は変わらず次の局へは進まない
+        if (playerId === PLAYER_IDS[dealerIndex]) {
+            console.log("親がロンしたため、局は継続です。");
+            isDealerHola = true;
+        }
         proceedToNextRound().then(() => {
             isRoundEnding = false;
         });
@@ -563,13 +564,13 @@ function handleRon(playerId) {
 function handleTsumo(playerId) {
     console.log(`${playerId} がツモしました！`);
 
-    // 親がツモした場合、親は変わらず次の局へは進まない
-    if (playerId === PLAYER_IDS[dealerIndex]) {
-        console.log("親がツモしたため、局は継続です。");
-        isDealerHola = true;
-    }
     // proceedToNextRound() の完了後に isRoundEnding を false に戻す
     if (!isRoundEnding) {
+        // 親がツモした場合、親は変わらず次の局へは進まない
+        if (playerId === PLAYER_IDS[dealerIndex]) {
+            console.log("親がツモしたため、局は継続です。");
+            isDealerHola = true;
+        }
         proceedToNextRound().then(() => {
             isRoundEnding = false;
         });
