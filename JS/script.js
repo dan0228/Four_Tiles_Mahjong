@@ -10,12 +10,13 @@ const PLAYER_IDS = ['left', 'bottom', 'right', 'top'];
 // ゲームの状態を表す変数
 let gameStarted = false;
 let currentPlayerIndex = 0;
-let isDeclared = false; // ロン宣言
+let isRonDeclared = false; // ロン宣言
 let isRonPossible = false; // ロン可能
-let remainingTilesCount = 136; // 残り牌数
 let isRonSkip = false; // ロンスキップ
 let isDealerHola = false; // 親和了
 let isRoundEnding = false; // 局の終了処理中かどうかを示すフラグ
+let remainingTilesCount = 136; // 残り牌数
+let playerScores = {}; // プレイヤーの点数を格納するオブジェクト
 
 // 局数と親の順番を管理する変数を追加
 let currentRound = 1; // 現在の局数
@@ -243,6 +244,12 @@ function initializeGame() {
     // 残り牌数を初期化
     remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
 
+    // プレイヤーの初期スコアを設定
+    PLAYER_IDS.forEach(playerId => {
+        playerScores[playerId] = 25000;
+    });
+    updatePlayerScoresDisplay();
+
     // 最初のターンを開始
     startGame();
 
@@ -325,6 +332,24 @@ function updateRemainingTilesDisplay() {
 }
 
 /**
+ * プレイヤーの点数表示を更新する
+ */
+function updatePlayerScoresDisplay() {
+    PLAYER_IDS.forEach(playerId => {
+        const scoreElement = document.getElementById(`${playerId}-score`);
+        scoreElement.innerHTML = ''; // 既存の画像をクリア
+
+        const scoreString = playerScores[playerId].toString().padStart(5, '0');
+        for (let i = 0; i < scoreString.length; i++) {
+            const digitImage = document.createElement('img');
+            digitImage.src = `Picture/${scoreString[i]}.png`;
+            digitImage.alt = scoreString[i];
+            scoreElement.appendChild(digitImage);
+        }
+    });
+}
+
+/**
  * ゲームを開始する
  */
 function startGame() {
@@ -355,7 +380,7 @@ async function proceedToNextRound() {
     isRoundEnding = true;
 
     // ロンが成立したらhandleRonCheck関数が終了してから後続処理が行われるようループ
-    while (isDeclared) {
+    while (isRonDeclared) {
         // 一定時間待機 (ブラウザがフリーズしないように)
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
@@ -373,7 +398,7 @@ async function proceedToNextRound() {
     isRonPossible = false;
     isRonSkip = false;
     isDealerHola = false;
-    isDeclared = false;
+    isRonDeclared = false;
 
     // 牌を初期化
     initializeTiles();
@@ -449,9 +474,12 @@ async function proceedToNextRound() {
  * @param {string} playerId プレイヤーID
  */
 function startTurn(playerId) {
+    // 点数表示を更新
+    updatePlayerScoresDisplay();
+
     // 牌を引く
     drawTile(playerId);
-    if (isDeclared) {
+    if (isRonDeclared) {
         return;
     }
     // ツモ判定を行う
@@ -479,7 +507,7 @@ function setupLastTileClickListener(playerId) {
  */
 function endTurn() {
     // 次のプレイヤーのターンを開始
-    if (!isDeclared) {
+    if (!isRonDeclared) {
         currentPlayerIndex = (currentPlayerIndex + 1) % PLAYER_IDS.length;
         startTurn(getCurrentPlayerId());
     }
@@ -545,8 +573,8 @@ async function handleRonCheck(playerId, discardedTile) {
 
     while (isRonPossible && !isRonSkip) {
         // ロンが成立したら関数を終了
-        if (isDeclared) {
-            isDeclared = false;
+        if (isRonDeclared) {
+            isRonDeclared = false;
             isRonPossible = false;
             isRonSkip = false;
             return;
@@ -570,7 +598,7 @@ async function handleRonCheck(playerId, discardedTile) {
 function setupRonButtonListener(playerId) {
     ronButtons[playerId].addEventListener('click', () => {
         // ロン宣言済み
-        isDeclared = true;
+        isRonDeclared = true;
 
         // ロンボタン、ツモボタン、スキップボタンを非表示
         hideAllRonButtons();
@@ -588,9 +616,6 @@ function setupRonButtonListener(playerId) {
  */
 function setupTsumoButtonListener(playerId) {
     tsumoButtons[playerId].addEventListener('click', () => {
-        // ツモ宣言済み
-        isDeclared = true;
-
         // ツモボタンとスキップボタンを非表示
         hideAllTsumoButtons();
         hideAllSkipButtons();
@@ -658,9 +683,9 @@ function checkTsumo(playerId) {
         // スキップボタンのイベントリスナーを設定
         setupSkipButtonListener(playerId, true);
 
-        return true;
+        // ツモボタンのイベントリスナーを設定
+        setupTsumoButtonListener(playerId);
     }
-    return false;
 }
 
 /**
@@ -859,7 +884,7 @@ function drawTile(playerId) {
         const tile = allTiles.pop();
         // ツモ牌として追加することを明示的に伝える
         addTileToHand(playerId, tile, true);
-        if (isDeclared) {
+        if (isRonDeclared) {
             return;
         }
         // 残り牌数を更新
