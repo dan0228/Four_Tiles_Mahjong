@@ -18,6 +18,7 @@ html {
     background-image: url('../Picture/麻雀マット.png');
     background-size: cover;
     background-repeat: no-repeat;
+    border: none;
     overflow: hidden;
 }
 
@@ -58,6 +59,7 @@ html {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    cursor: pointer;
 }
 
 .discarded-tile {
@@ -326,33 +328,36 @@ html {
     left: 0%;
 }
 
-/* 左側プレイヤーのボタン、点数は回転 */
+/* 左側プレイヤーのボタン、点数、フリテン表示は回転 */
 #left-tsumo-button,
 #left-ron-button,
 #left-kan-button,
 #left-skip-button,
 #left-pon-button,
-#left-score {
+#left-score,
+#left-furiten {
     transform: rotate(90deg);
 }
 
-/* 右側プレイヤーのボタン、点数は回転 */
+/* 右側プレイヤーのボタン、点数、フリテン表示は回転 */
 #right-tsumo-button,
 #right-ron-button,
 #right-kan-button,
 #right-skip-button,
 #right-pon-button,
-#right-score {
+#right-score,
+#right-furiten {
     transform: rotate(-90deg);
 }
 
-/* 上側プレイヤーのボタン、点数は回転 */
+/* 上側プレイヤーのボタン、点数、フリテン表示は回転 */
 #top-tsumo-button,
 #top-ron-button,
 #top-kan-button,
 #top-skip-button,
 #top-pon-button,
-#top-score {
+#top-score,
+#top-furiten {
     transform: rotate(180deg);
 }
 
@@ -410,7 +415,7 @@ html {
 #mute-button {
     position: absolute;
     top: 91%;
-    left: 85%;
+    left: 92.8%;
     background-color: transparent;
     background-repeat: no-repeat;
     border: none;
@@ -421,8 +426,8 @@ html {
 }
 
 #mute-button img {
-    width: 70%;
-    height: 80%;
+    width: 50%;
+    height: 70%;
 }
 
 /* プレイヤーの点数表示 */
@@ -446,7 +451,7 @@ html {
 
 #bottom-score {
     position: absolute;
-    top: 56.8%;
+    top: 56.5%;
     left: 0.2%;
 }
 
@@ -461,4 +466,41 @@ html {
 .player-score img {
     width: 1%;
     height: auto;
+}
+
+/* フリテンのスタイル */
+#bottom-furiten,
+#left-furiten,
+#right-furiten,
+#top-furiten {
+    position: absolute;
+    background-image: url('../Picture/フリテン.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    top: 0%;
+    left: 0%;
+    width: 10%;
+    padding-top: 60%;
+}
+
+#bottom-furiten {
+    top: 87.5%;
+    left: 30%;
+}
+
+#left-furiten {
+    top: -32%;
+    left: -8.5%;
+}
+
+#right-furiten {
+    top: 21.5%;
+    left: 98.5%;
+}
+
+#top-furiten {
+    top: -95%;
+    left: 60%;
 }

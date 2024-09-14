@@ -18,6 +18,9 @@ let isRoundEnding = false; // 局の終了処理中かどうかを示すフラ�
 let remainingTilesCount = 136; // 残り牌数
 let playerScores = {}; // プレイヤーの点数を格納するオブジェクト
 
+// フリテン状態を示す変数を追加
+let isFuriten = {}; // プレイヤーIDをキーに、フリテン状態を格納
+
 // 局数と親の順番を管理する変数を追加
 let currentRound = 1; // 現在の局数
 let dealerIndex = Math.floor(Math.random() * PLAYER_IDS.length); // 親のインデックス
@@ -400,6 +403,14 @@ async function proceedToNextRound() {
     isDealerHola = false;
     isRonDeclared = false;
 
+    // 各プレイヤーのフリテンフラグをリセット
+    PLAYER_IDS.forEach(playerId => {
+        isFuriten[playerId] = false;
+        // フリテン状態に応じて画像を表示/非表示
+        const furitenImage = document.getElementById(`${playerId}-furiten`);
+        furitenImage.style.display = 'none';
+    });
+
     // 牌を初期化
     initializeTiles();
 
@@ -484,6 +495,7 @@ function startTurn(playerId) {
     }
     // ツモ判定を行う
     checkTsumo(playerId);
+
 }
 
 /**
@@ -508,6 +520,8 @@ function setupLastTileClickListener(playerId) {
 function endTurn() {
     // 次のプレイヤーのターンを開始
     if (!isRonDeclared) {
+        // ターン終了時にフリテン状態を更新
+        updateFuritenStatus(getCurrentPlayerId(currentPlayerIndex));
         currentPlayerIndex = (currentPlayerIndex + 1) % PLAYER_IDS.length;
         startTurn(getCurrentPlayerId());
     }
@@ -553,7 +567,8 @@ async function handleRonCheck(playerId, discardedTile) {
         const otherPlayerIndex = (currentPlayerIndex + i) % PLAYER_IDS.length;
         const otherPlayerId = PLAYER_IDS[otherPlayerIndex];
 
-        if (checkRon(otherPlayerId, playerId)) {
+        // フリテンでなく、ロン可能か
+        if (!isFuriten[otherPlayerId] && checkRon(otherPlayerId, playerId)) {
             // ロン可能である場合にtrueにする
             isRonPossible = true;
 
@@ -872,6 +887,32 @@ function canDiscard(playerId) {
 }
 
 /**
+ * 指定されたプレイヤーのフリテン状態を更新する
+ * @param {string} playerId プレイヤーID
+ */
+function updateFuritenStatus(playerId) {
+    // 捨て牌にロン可能な牌が含まれているかチェック
+    const discardedTilesOfPlayer = playerDiscardedElements[playerId].querySelectorAll('.tile');
+    const handTiles = getHandTiles(playerId);
+    let isRonPossibleInDiscarded = false;
+
+    for (const discardedTileElement of discardedTilesOfPlayer) {
+        const discardedTile = discardedTileElement.querySelector('img').alt;
+        if (isWinningHand([...handTiles, discardedTile])) {
+            isRonPossibleInDiscarded = true;
+            break;
+        }
+    }
+
+    // フリテン状態を更新
+    isFuriten[playerId] = isRonPossibleInDiscarded;
+
+    // フリテン状態に応じて画像を表示/非表示
+    const furitenImage = document.getElementById(`${playerId}-furiten`);
+    furitenImage.style.display = isFuriten[playerId] ? 'block' : 'none';
+}
+
+/**
  * 指定されたプレイヤーに牌を引かせる
  * @param {string} playerId プレイヤーID
  */
@@ -938,11 +979,6 @@ function showRonButtons(playerId) {
     skipButtons[playerId].style.display = 'block';
 }
 
-// handleSkip を呼び出す関数を定義
-function handleSkipClick(isTsumo) {
-    handleSkip(isTsumo);
-}
-
 /**
  * スキップボタンのイベントリスナーを設定する
  * @param {string} playerId プレイヤーID
@@ -951,20 +987,18 @@ function handleSkipClick(isTsumo) {
 function setupSkipButtonListener(playerId, isTsumo) {
     const skipButton = skipButtons[playerId];
 
-    // 既存のイベントリスナーを削除
-    skipButton.removeEventListener('click', handleSkipClick);
-
     // 新しいイベントリスナーを設定
     skipButton.addEventListener('click', () => {
-        handleSkip(isTsumo);
+        handleSkip(isTsumo, playerId);
     });
 }
 
 /**
  * スキップボタンがクリックされた時の処理
  * @param {boolean} isTsumo ツモかどうか
+ * @param {boolean} playerId プレイヤーID
  */
-function handleSkip(isTsumo) {
+function handleSkip(isTsumo, playerId) {
     // ロンボタン、ツモボタン、スキップボタンを非表示
     hideAllRonButtons();
     hideAllTsumoButtons();
@@ -972,6 +1006,10 @@ function handleSkip(isTsumo) {
 
     // ロンでスキップしたらターンを進める
     if (!isTsumo) {
+        isFuriten[playerId] = true;
+        // フリテン状態に応じて画像を表示/非表示
+        const furitenImage = document.getElementById(`${playerId}-furiten`);
+        furitenImage.style.display = isFuriten[playerId] ? 'block' : 'none';
         isRonSkip = true;
     }
 }
