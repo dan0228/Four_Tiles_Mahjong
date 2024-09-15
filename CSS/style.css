@@ -116,6 +116,11 @@ html {
     }
 }
 
+/* ツモ牌の左側に隙間を追加 */
+.player-hand .tile.tsumo-tile {
+    margin-left: 10px;
+}
+
 /* プレイヤーの位置指定 */
 #bottom-player {
     position: absolute;
@@ -378,7 +383,7 @@ html {
 /* 場数のスタイル */
 #round-image {
     position: absolute;
-    top: 44%;
+    top: 43.6%;
     left: 46.7%;
     background-color: transparent;
     background-size: contain;
@@ -406,9 +411,19 @@ html {
     height: auto;
 }
 
-/* ツモ牌の左側に隙間を追加 */
-.player-hand .tile.tsumo-tile {
-    margin-left: 10px;
+/* 残千点棒表示のスタイル */
+#zan-tenbou-image {
+    position: absolute;
+    top: 48.9%;
+    left: 47%;
+    background-image: url('../Picture/zan_1000.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    display: block;
+    width: 10%;
+    height: 1.8%;
 }
 
 /* ミュートボタンのスタイル */

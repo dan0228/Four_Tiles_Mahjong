@@ -748,12 +748,7 @@ function isWinningHand(tiles) {
     });
 
     // 各牌の出現回数をカウント
-    const tileCounts = {};
-    for (const tile of sortedTiles) {
-        // 字牌の場合、数字を含めない
-        const tileKey = tile.number !== null ? `${tile.suit}${tile.number}` : `${tile.suit}`;
-        tileCounts[tileKey] = (tileCounts[tileKey] || 0) + 1;
-    }
+    const tileCounts = countTileOccurrences(sortedTiles);
 
     // 対子（頭）があるか判定
     let pairTile = null;
@@ -804,8 +799,33 @@ function isWinningHand(tiles) {
             return a.suit.localeCompare(b.suit);
         }
     });
+
     // 残りの牌が順子または刻子で構成されているか判定
-    return checkMeld(remainingTiles);
+    if (checkMeld(remainingTiles)) {
+        // TODO: 役判定
+        return true;
+    }
+
+    // 大四喜、小四喜パターンの判定
+    if (isSpecialHand1(tileCounts)) {
+        // tilesの最初の４つが東南西北か
+        if (tiles.slice(0, 4).every(tile => ['東', '南', '西', '北'].includes(tile.suit))) {
+            // Todo 大四喜
+        } else {
+            // Todo 小四喜
+        }
+        return true;
+    }
+
+    // 大三元パターンの判定
+    if (isSpecialHand2(tileCounts)) {
+        return true;
+    }
+
+    // 清老頭パターンの判定
+    if (isSpecialHand3(tileCounts)) {
+        return true;
+    }
 }
 
 /**
@@ -832,6 +852,113 @@ function checkMeld(tiles) {
     }
 
     return false; // 刻子も順子も作れない場合は和了不可能
+}
+
+/**
+ * 大四喜と小四喜（東南西北が4枚ともう一枚東南西北がある場合にtrueを返す）
+ * @param {object[]} tileCounts 各牌のカウント数
+ * @returns {boolean} 東南西北が5枚かどうか
+ */
+function isSpecialHand1(tileCounts) {
+    const targetTiles = ['東', '南', '西', '北'];
+    // targetTilesが全て手牌に含まれていないか判定
+    if (!targetTiles.every(tile => tileCounts[tile] > 0)) {
+        return false;
+    } else {
+        // targetTilesのいずれかが5枚あるか判定
+        for (const targetTile of targetTiles) {
+            if (tileCounts[targetTile] === 2) {
+                return true;
+            }
+        }
+    }
+}
+
+/**
+ * 大三元（白發中と頭二枚のパターンを判定する）
+ * @param {object[]} tileCounts 各牌のカウント数
+ * @returns {boolean} 白發中と頭二枚のパターンかどうか
+ */
+function isSpecialHand2(tileCounts) {
+    const targetTiles = ['白', '發', '中'];
+    // 白發中が全て含まれていないか判定
+    if (!targetTiles.every(tile => tileCounts[tile] > 0)) {
+        return false;
+    } else {
+        for (const tileKey in tileCounts) {
+            // 白發中のうちいずれかが3枚か
+            if (targetTiles.includes(tileKey) && tileCounts[tileKey] === 3) {
+                return true;
+            }
+            // 白發中以外で頭があるか
+            if (!targetTiles.includes(tileKey) && tileCounts[tileKey] === 2) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * 清老頭（一萬、一筒、一索か九萬、九筒、九索と、それらの頭二枚のパターンを判定する）
+ * @param {object[]} tileCounts 各牌のカウント数
+ * @returns {boolean} 一萬、一筒、一索か九萬、九筒、九索と、それらの頭二枚のパターンかどうか
+ */
+function isSpecialHand3(tileCounts) {
+    const targetTiles1 = ['萬1', '筒1', '索1'];
+    const targetTiles2 = ['萬9', '筒9', '索9'];
+    hasMan1Pin1Sou1 = false;
+    hasMan9Pin9Sou9 = false;
+    // 1萬1筒1索が全て含まれていないか判定
+    if (!targetTiles1.every(tile => tileCounts[tile] > 0)) {
+        hasMan1Pin1Sou1 = false;
+    } else {
+        for (const tileKey in tileCounts) {
+            // 1萬1筒1索のうちいずれかが3枚か
+            if (targetTiles1.includes(tileKey) && tileCounts[tileKey] === 3) {
+                hasMan1Pin1Sou1 = true;
+                break;
+            }
+            // 9萬9筒9索のうちいずれかで頭があるか
+            if (targetTiles2.includes(tileKey) && tileCounts[tileKey] === 2) {
+                hasMan1Pin1Sou1 = true;
+                break;
+            }
+        }
+    }
+    // 9萬9筒9索が全て含まれていないか判定
+    if (!targetTiles2.every(tile => tileCounts[tile] > 0)) {
+        hasMan9Pin9Sou9 = false;
+    } else {
+        for (const tileKey in tileCounts) {
+            // 9萬9筒9索のうちいずれかが3枚か
+            if (targetTiles2.includes(tileKey) && tileCounts[tileKey] === 3) {
+                hasMan9Pin9Sou9 = true;
+                break;
+            }
+            // 1萬1筒1索のうちいずれかで頭があるか
+            if (targetTiles1.includes(tileKey) && tileCounts[tileKey] === 2) {
+                hasMan9Pin9Sou9 = true;
+                break;
+            }
+        }
+    }
+    return hasMan1Pin1Sou1 || hasMan9Pin9Sou9;
+}
+
+/**
+ * 牌の出現回数をカウントする
+ * @param {object[]} tiles 牌オブジェクトの配列
+ * @returns {object} 牌の種類をキー、出現回数を値としたオブジェクト
+ */
+function countTileOccurrences(tiles) {
+    const tileCounts = {};
+    for (const tile of tiles) {
+        // 字牌の場合、数字を含めない
+        const tileKey = tile.number !== null ? `${tile.suit}${tile.number}` : `${tile.suit}`;
+        tileCounts[tileKey] = (tileCounts[tileKey] || 0) + 1;
+    }
+    return tileCounts;
 }
 
 // --- その他の関数 ---
