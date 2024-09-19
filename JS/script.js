@@ -12,7 +12,11 @@ let gameStarted = false;
 let currentPlayerIndex = 0;
 let isRonDeclared = false; // ロン宣言
 let isRonPossible = false; // ロン可能
-let isRonSkip = false; // ロンスキップ
+let isPonDeclared = false; // ポン宣言
+let isPonPossible = false; // ポン可能
+let isKanDeclared = false; // カン宣言
+let isKanPossible = false; // カン可能
+let isSkip = false; // スキップ
 let isDealerHola = false; // 親和了
 let isRoundEnding = false; // 局の終了処理中かどうかを示すフラグ
 let remainingTilesCount = 136; // 残り牌数
@@ -34,6 +38,8 @@ let playerHandElements = {};
 let playerDiscardedElements = {};
 let tsumoButtons = {};
 let ronButtons = {};
+let ponButtons = {};
+let kanButtons = {};
 let skipButtons = {};
 let remainingTilesElement = null; // 残り牌数を表示する要素をキャッシュ
 
@@ -310,6 +316,8 @@ function cacheDOMElements() {
         playerDiscardedElements[playerId] = document.getElementById(playerId + '-discarded');
         tsumoButtons[playerId] = document.getElementById(playerId + '-tsumo-button');
         ronButtons[playerId] = document.getElementById(playerId + '-ron-button');
+        ponButtons[playerId] = document.getElementById(playerId + '-pon-button');
+        kanButtons[playerId] = document.getElementById(playerId + '-kan-button');
         skipButtons[playerId] = document.getElementById(playerId + '-skip-button');
     });
     // 残り牌数を表示する要素をキャッシュ
@@ -399,7 +407,7 @@ async function proceedToNextRound() {
 
     // フラグの初期化
     isRonPossible = false;
-    isRonSkip = false;
+    isSkip = false;
     isDealerHola = false;
     isRonDeclared = false;
 
@@ -493,6 +501,22 @@ function startTurn(playerId) {
     if (isRonDeclared) {
         return;
     }
+
+    // カン可能か
+    const handTiles = getHandTiles(playerId);
+    const tile = handTiles[handTiles.length - 1];
+    if (checkKan(playerId, null)) {
+        // カンボタンとスキップボタンを表示
+        showKanButtons(playerId);
+        showSkipButtons(playerId);
+
+        // カンボタンのイベントリスナーを設定
+        setupKanButtonListener(playerId, null, tile);
+
+        // スキップボタンのイベントリスナーを設定
+        setupSkipButtonListener(playerId, true);
+    }
+
     // ツモ判定を行う
     checkTsumo(playerId);
 
@@ -542,19 +566,21 @@ function handleTileClick(playerId, tile, tileElement) {
         // 打牌音を再生
         playSound(dahaiSound);
 
-        // ロン判定と処理
-        handleRonCheck(playerId, tile);
+        // 捨て牌に対する処理
+        handleDiscardAction(playerId, tile);
     }
 }
 
 /**
- * ロン判定と処理を行う
+ * 捨て牌に対する処理を行う
  * @param {string} playerId 牌を捨てたプレイヤーID
  * @param {string} discardedTile 捨てられた牌の文字列
  */
-async function handleRonCheck(playerId, discardedTile) {
+async function handleDiscardAction(playerId, discardedTile) {
     // ロン判定前にフラグをリセット
-    isRonSkip = false;
+    isSkip = false;
+    isPonPossible = false;
+    isKanPossible = false;
 
     // 捨て牌リストを更新
     discardedTiles[playerId] = discardedTile;
@@ -562,48 +588,93 @@ async function handleRonCheck(playerId, discardedTile) {
     // 現在のプレイヤーのインデックスを取得
     const currentPlayerIndex = PLAYER_IDS.indexOf(playerId);
 
-    // 現在のプレイヤーの次の人から反時計回りにロン判定を行う
+    // 全員宣言がないか判定するフラグ
+    isAllNotDeclaration = true;
+
+    // 現在のプレイヤーの次の人から反時計回りにロン、ポン、カン判定を行う
     for (let i = 1; i < PLAYER_IDS.length; i++) {
         const otherPlayerIndex = (currentPlayerIndex + i) % PLAYER_IDS.length;
         const otherPlayerId = PLAYER_IDS[otherPlayerIndex];
 
         // フリテンでなく、ロン可能か
         if (!isFuriten[otherPlayerId] && checkRon(otherPlayerId, playerId)) {
-            // ロン可能である場合にtrueにする
             isRonPossible = true;
 
             // ロンボタンとスキップボタンを表示
             showRonButtons(otherPlayerId);
+            showSkipButtons(otherPlayerId);
 
             // ロンボタンのイベントリスナーを設定
             setupRonButtonListener(otherPlayerId);
+        }
 
-            // スキップボタンのイベントリスナーを設定
+        // ポン可能か
+        if (remainingTilesCount >= 1) {
+            if (checkPon(otherPlayerId, discardedTile)) {
+                isPonPossible = true;
+
+                // ポンボタンとスキップボタンを表示
+                showPonButtons(otherPlayerId);
+                showSkipButtons(otherPlayerId);
+
+                // ポンボタンのイベントリスナーを設定
+                setupPonButtonListener(otherPlayerId, playerId, discardedTile);
+            }
+        }
+
+        // カン可能か
+        if (remainingTilesCount >= 1) {
+            if (checkKan(otherPlayerId, discardedTile)) {
+                isKanPossible = true;
+
+                // カンボタンを表示
+                showKanButtons(otherPlayerId);
+
+                // カンボタンのイベントリスナーを設定
+                setupKanButtonListener(otherPlayerId, playerId, discardedTile);
+            }
+        }
+
+        if (isRonPossible) {
+            // フリテン判定ありのスキップボタンのイベントリスナーを設定
             setupSkipButtonListener(otherPlayerId, false);
+        } else if (isPonPossible || isKanPossible) {
+            // フリテン判定なしのスキップボタンのイベントリスナーを設定
+            setupSkipButtonListener(otherPlayerId, true);
+        }
 
-            // ロン判定がTrueになったらループを抜ける(頭ハネ)
-            break;
+        while ((isRonPossible || isPonPossible || isKanPossible) && !isSkip) {
+            isAllNotDeclaration = false;
+            // 誰かがロンかポンかカンが成立したら関数を終了
+            if (isRonDeclared || isRonDeclared || isKanDeclared) {
+                isRonDeclared = false;
+                isRonPossible = false;
+                isPonPossible = false;
+                isPonDeclared = false;
+                isKanPossible = false;
+                isKanDeclared = false;
+                isSkip = false;
+                return;
+            }
+            // 一定時間待機 (ブラウザがフリーズしないように)
+            await new Promise(resolve => setTimeout(resolve, 100));
+            if (isSkip) {
+                isRonPossible = false;
+                isPonPossible = false;
+                isKanPossible = false;
+            }
         }
     }
 
-    while (isRonPossible && !isRonSkip) {
-        // ロンが成立したら関数を終了
-        if (isRonDeclared) {
-            isRonDeclared = false;
-            isRonPossible = false;
-            isRonSkip = false;
-            return;
-        }
-        // 一定時間待機 (ブラウザがフリーズしないように)
-        await new Promise(resolve => setTimeout(resolve, 100));
-    }
-
-    // ロン可能出なかった場合もしくはロン可能でスキップした場合にターンを終了
-    if (!isRonPossible || isRonSkip) {
+    // 全員がロン、ポン、カン可能ではなかった場合もしくはスキップした場合にターンを終了
+    if (isAllNotDeclaration || isSkip) {
         endTurn();
     }
+    isAllNotDeclaration = true;
     isRonPossible = false;
-    isRonSkip = false;
+    isPonPossible = false;
+    isKanPossible = false;
+    isSkip = false;
 }
 
 /**
@@ -615,8 +686,10 @@ function setupRonButtonListener(playerId) {
         // ロン宣言済み
         isRonDeclared = true;
 
-        // ロンボタン、ツモボタン、スキップボタンを非表示
+        // ボタンを非表示
         hideAllRonButtons();
+        hideAllPonButtons();
+        hideAllKanButtons();
         hideAllTsumoButtons();
         hideAllSkipButtons();
 
@@ -637,6 +710,46 @@ function setupTsumoButtonListener(playerId) {
 
         // ツモ処理の実装
         handleTsumo(playerId);
+    });
+}
+
+/**
+ * ポンボタンのイベントリスナーを設定する
+ * @param {string} playerId プレイヤーID
+ * @param {string} targetPlayerId ターゲットとなるプレイヤーID (牌を捨てたプレイヤー)
+ * @param {string} tile ポン牌
+ */
+function setupPonButtonListener(playerId, targetPlayerId, tile) {
+    ponButtons[playerId].addEventListener('click', () => {
+        // ボタンを非表示
+        hideAllRonButtons();
+        hideAllPonButtons();
+        hideAllKanButtons();
+        hideAllTsumoButtons();
+        hideAllSkipButtons();
+
+        // ポン処理の実装
+        handlePon(playerId, targetPlayerId, tile)
+    });
+}
+
+/**
+ * カンボタンのイベントリスナーを設定する
+ * @param {string} playerId プレイヤーID
+ * @param {string} targetPlayerId ターゲットとなるプレイヤーID (牌を捨てたプレイヤー、または null)
+ * @param {string} tile カン牌
+ */
+function setupKanButtonListener(playerId, targetPlayerId, tile) {
+    kanButtons[playerId].addEventListener('click', () => {
+        // ボタンを非表示
+        hideAllRonButtons();
+        hideAllPonButtons();
+        hideAllKanButtons();
+        hideAllTsumoButtons();
+        hideAllSkipButtons();
+
+        // カン処理の実装
+        handleKan(playerId, targetPlayerId, tile)
     });
 }
 
@@ -679,6 +792,91 @@ function handleTsumo(playerId) {
         });
     }
 }
+// TODO: ポンとカンの処理見直し
+/**
+ * ポン処理を行う
+ * @param {string} playerId ポンをしたプレイヤーID
+ * @param {string} targetPlayerId ターゲットとなるプレイヤーID (牌を捨てたプレイヤー)
+ * @param {string} tile ポンする牌
+ */
+function handlePon(playerId, targetPlayerId, tile) {
+    console.log(`${playerId} が ${tile} でポンしました！`);
+
+    // ポンした牌を手牌から削除
+    removeTilesFromHand(playerId, tile, 2);
+
+    // 捨て牌からポンした牌を削除
+    removeTileFromDiscarded(targetPlayerId, tile);
+
+    // ポンした牌を手牌に追加 (ポン表示)
+    addTileToHand(playerId, tile);
+    addTileToHand(playerId, tile);
+    addTileToHand(playerId, tile);
+
+    // 手牌をソート
+    sortHand(playerId);
+
+    // ターンをポンしたプレイヤーに移す
+    currentPlayerIndex = PLAYER_IDS.indexOf(playerId);
+
+    // ポン音を再生
+    // TODO: ポン音を再生する処理を追加
+
+    // 処理の終了を待つ
+    isPonDeclared = true;
+}
+
+/**
+ * カン処理を行う
+ * @param {string} playerId カンをしたプレイヤーID
+ * @param {string} targetPlayerId ターゲットとなるプレイヤーID (nullのとき暗槓)
+ * @param {string} tile カンする牌
+ */
+function handleKan(playerId, targetPlayerId, tile) {
+    console.log(`${playerId} が ${tile} でカンしました！`);
+
+    // カンした牌を手牌から削除
+    removeTilesFromHand(playerId, tile, 3);
+
+    // 捨て牌からカンした牌を削除 (他家からカンする場合)
+    if (targetPlayerId !== null) {
+        removeTileFromDiscarded(targetPlayerId, tile);
+    }
+
+    // カンした牌を手牌に追加 (カン表示)
+    addTileToHand(playerId, tile);
+    addTileToHand(playerId, tile);
+    addTileToHand(playerId, tile);
+    addTileToHand(playerId, tile);
+
+    // 手牌をソート
+    sortHand(playerId);
+
+    // ターンをカンしたプレイヤーに移す
+    currentPlayerIndex = PLAYER_IDS.indexOf(playerId);
+
+    // カン音を再生
+    // TODO: カン音を再生する処理を追加
+
+    // 牌を一枚引く
+    drawTile(playerId);
+
+    // 処理の終了を待つ
+    isKanDeclared = true;
+}
+
+/**
+ * 捨て牌エリアから指定された牌を削除する
+ * @param {string} playerId プレイヤーID
+ * @param {string} tile 削除する牌
+ */
+function removeTileFromDiscarded(playerId, tile) {
+    const playerDiscardedElement = playerDiscardedElements[playerId];
+    const tileElement = Array.from(playerDiscardedElement.children).find(tileElement => tileElement.textContent === tile);
+    if (tileElement) {
+        playerDiscardedElement.removeChild(tileElement);
+    }
+}
 
 // --- 判定に関する関数 ---
 
@@ -692,8 +890,8 @@ function checkTsumo(playerId) {
 
     if (isWinningHand(handTiles)) {
         // 該当するプレイヤーのツモボタンとスキップボタンを表示
-        tsumoButtons[playerId].style.display = 'block';
-        skipButtons[playerId].style.display = 'block';
+        showTsumoButtons(playerId);
+        showSkipButtons(playerId);
 
         // スキップボタンのイベントリスナーを設定
         setupSkipButtonListener(playerId, true);
@@ -733,19 +931,7 @@ function isWinningHand(tiles) {
     }
 
     // 牌を種類と数字に分離してソート
-    const sortedTiles = tiles.map(tile => {
-        const suit = tile.slice(-1);
-        // 字牌の場合、numberはnullとする
-        const number = SUIT_TYPES.includes(suit) ? parseInt(tile.slice(0, -1)) : null;
-        return { suit, number };
-    }).sort((a, b) => {
-        if (a.suit === b.suit) {
-            // 字牌の場合は種類のみで比較
-            return a.number !== null && b.number !== null ? a.number - b.number : a.suit.localeCompare(b.suit);
-        } else {
-            return a.suit.localeCompare(b.suit);
-        }
-    });
+    const sortedTiles = separateAndSortTiles(tiles);
 
     // 各牌の出現回数をカウント
     const tileCounts = countTileOccurrences(sortedTiles);
@@ -947,7 +1133,28 @@ function isSpecialHand3(tileCounts) {
 }
 
 /**
- * 牌の出現回数をカウントする
+ * 牌の文字列配列を種類と数字に分離してソートする
+ * @param {string[]} tiles 牌の文字列配列 (例: ['1萬', '2萬', '3筒', '東'])
+ * @returns {object[]} 種類と数字を持つオブジェクトの配列 (例: [{ suit: '萬', number: 1 }, { suit: '萬', number: 2 }, { suit: '筒', number: 3 }, { suit: '東', number: null }])
+ */
+function separateAndSortTiles(tiles) {
+    return tiles.map(tile => {
+        const suit = tile.slice(-1);
+        // 字牌の場合、numberはnullとする
+        const number = SUIT_TYPES.includes(suit) ? parseInt(tile.slice(0, -1)) : null;
+        return { suit, number };
+    }).sort((a, b) => {
+        if (a.suit === b.suit) {
+            // 字牌の場合は種類のみで比較
+            return a.number !== null && b.number !== null ? a.number - b.number : a.suit.localeCompare(b.suit);
+        } else {
+            return a.suit.localeCompare(b.suit);
+        }
+    });
+}
+
+/**
+ * ソートされた牌の出現回数をカウントする
  * @param {object[]} tiles 牌オブジェクトの配列
  * @returns {object} 牌の種類をキー、出現回数を値としたオブジェクト
  */
@@ -959,6 +1166,36 @@ function countTileOccurrences(tiles) {
         tileCounts[tileKey] = (tileCounts[tileKey] || 0) + 1;
     }
     return tileCounts;
+}
+
+/**
+ * ポン判定を行う
+ * @param {string} playerId プレイヤーID
+ * @param {string} tile 牌の文字列表現
+ * @returns {boolean} ポン可能かどうか
+ */
+function checkPon(playerId, tile) {
+    const handTiles = getHandTiles(playerId);
+    // 同じ牌が2枚あるか判定
+    return handTiles.filter(t => t === tile).length >= 2;
+}
+
+/**
+ * カン判定を行う
+ * @param {string} playerId プレイヤーID
+ * @param {string} tile 牌の文字列表現
+ * @returns {boolean} カン可能かどうか
+ */
+function checkKan(playerId, tile) {
+    const handTiles = getHandTiles(playerId);
+    if (tile === null) { // 暗槓のとき、同じ牌が4枚以上あるか判定 
+        const sortedTiles = separateAndSortTiles(handTiles); // 牌を種類と数字に分離してソート
+        const tileCounts = countTileOccurrences(sortedTiles); // 牌の種類と枚数をカウント
+        const tileValues = Object.values(tileCounts); // 枚数の配列を取得
+        return tileValues.includes(4); // 枚数4が含まれているか判定
+    } else { // 明槓のとき、同じ牌が3枚以上あるか判定
+        return handTiles.filter(t => t === tile).length >= 3;
+    }
 }
 
 // --- その他の関数 ---
@@ -1046,6 +1283,8 @@ function updateFuritenStatus(playerId) {
 function drawTile(playerId) {
     hideAllTsumoButtons(); // すべてのツモボタンを非表示に
     hideAllRonButtons();   // すべてのロンボタンを非表示に
+    hideAllPonButtons(); // すべてのポンボタンを非表示に
+    hideAllKanButtons(); // すべてのカンボタンを非表示に
     hideAllSkipButtons();   // すべてのスキップボタンを非表示に
 
     if (allTiles.length > 0) {
@@ -1058,14 +1297,13 @@ function drawTile(playerId) {
         // 残り牌数を更新
         remainingTilesCount = allTiles.length - 13;
         // 残り牌数の表示を更新
-        updateRemainingTilesDisplay();
-        // ツモ音を再生
-        playSound(dahaiSound);
-
-        // 残り牌数が0枚になったら局終了
-        if (remainingTilesCount == 0) {
+        if (remainingTilesCount < 0) {
             console.log("流局です。次の局に進みます。");
             proceedToNextRound();
+        } else {
+            updateRemainingTilesDisplay();
+            // ツモ音を再生
+            playSound(dahaiSound);
         }
     }
 }
@@ -1077,6 +1315,8 @@ function drawTile(playerId) {
 function generateInitialHand(playerId) {
     hideAllTsumoButtons(); // すべてのツモボタンを非表示に
     hideAllRonButtons();   // すべてのロンボタンを非表示に
+    hideAllPonButtons(); // すべてのポンボタンを非表示に
+    hideAllKanButtons(); // すべてのカンボタンを非表示に
     hideAllSkipButtons();   // すべてのスキップボタンを非表示に
 
     const numTiles = 4 // 4枚引く
@@ -1098,11 +1338,42 @@ function getCurrentPlayerId() {
 }
 
 /**
- * 指定されたプレイヤーのロンボタンとスキップボタンを表示する
+ * 指定されたプレイヤーのロンボタンを表示する
  * @param {string} playerId プレイヤーID
  */
 function showRonButtons(playerId) {
     ronButtons[playerId].style.display = 'block';
+}
+
+/**
+ * 指定されたプレイヤーのポンボタンを表示する
+ * @param {string} playerId プレイヤーID
+ */
+function showPonButtons(playerId) {
+    ponButtons[playerId].style.display = 'block';
+}
+
+/**
+ * 指定されたプレイヤーのカンボタンを表示する
+ * @param {string} playerId プレイヤーID
+ */
+function showKanButtons(playerId) {
+    kanButtons[playerId].style.display = 'block';
+}
+
+/**
+ * 指定されたプレイヤーのツモボタンを表示する
+ * @param {string} playerId プレイヤーID
+ */
+function showTsumoButtons(playerId) {
+    tsumoButtons[playerId].style.display = 'block';
+}
+
+/**
+ * 指定されたプレイヤーのスキップボタンを表示する
+ * @param {string} playerId プレイヤーID
+ */
+function showSkipButtons(playerId) {
     skipButtons[playerId].style.display = 'block';
 }
 
@@ -1116,18 +1387,20 @@ function setupSkipButtonListener(playerId, isTsumo) {
 
     // 新しいイベントリスナーを設定
     skipButton.addEventListener('click', () => {
-        handleSkip(isTsumo, playerId);
+        handleSkip(playerId, isTsumo);
     });
 }
 
 /**
  * スキップボタンがクリックされた時の処理
- * @param {boolean} isTsumo ツモかどうか
  * @param {boolean} playerId プレイヤーID
+ * @param {boolean} isTsumo ツモかどうか
  */
-function handleSkip(isTsumo, playerId) {
-    // ロンボタン、ツモボタン、スキップボタンを非表示
+function handleSkip(playerId, isTsumo) {
+    // ボタンを非表示
     hideAllRonButtons();
+    hideAllPonButtons();
+    hideAllKanButtons();
     hideAllTsumoButtons();
     hideAllSkipButtons();
 
@@ -1137,8 +1410,8 @@ function handleSkip(isTsumo, playerId) {
         // フリテン状態に応じて画像を表示/非表示
         const furitenImage = document.getElementById(`${playerId}-furiten`);
         furitenImage.style.display = isFuriten[playerId] ? 'block' : 'none';
-        isRonSkip = true;
     }
+    isSkip = true;
 }
 
 /**
@@ -1153,6 +1426,20 @@ function hideAllTsumoButtons() {
  */
 function hideAllRonButtons() {
     Object.values(ronButtons).forEach(button => button.style.display = 'none');
+}
+
+/**
+ * すべてのポンボタンを非表示にする
+ */
+function hideAllPonButtons() {
+    Object.values(ponButtons).forEach(button => button.style.display = 'none');
+}
+
+/**
+ * すべてのカンボタンを非表示にする
+ */
+function hideAllKanButtons() {
+    Object.values(kanButtons).forEach(button => button.style.display = 'none');
 }
 
 /**

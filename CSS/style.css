@@ -225,7 +225,7 @@ html {
 #bottom-tsumo-button,
 #bottom-kan-button {
     position: absolute;
-    top: 78%;
+    top: 76%;
     left: 65%;
 }
 
@@ -234,7 +234,7 @@ html {
 #left-kan-button {
     position: absolute;
     top: 79%;
-    left: 19.5%;
+    left: 21%;
 }
 
 #right-ron-button,
@@ -242,14 +242,14 @@ html {
 #right-kan-button {
     position: absolute;
     top: 12%;
-    left: 70.5%;
+    left: 69.5%;
 }
 
 #top-ron-button,
 #top-tsumo-button,
 #top-kan-button {
     position: absolute;
-    top: 12%;
+    top: 14.5%;
     left: 26%;
 }
 
@@ -311,26 +311,26 @@ html {
 
 #bottom-pon-button {
     position: absolute;
-    top: 0%;
-    left: 0%;
+    top: 83%;
+    left: 65%;
 }
 
 #left-pon-button {
     position: absolute;
-    top: 78%;
-    left: 12%;
+    top: 79%;
+    left: 16.8%;
 }
 
 #right-pon-button {
     position: absolute;
-    top: 0%;
-    left: 0%;
+    top: 12%;
+    left: 73.4%;
 }
 
 #top-pon-button {
     position: absolute;
-    top: 0%;
-    left: 0%;
+    top: 7.5%;
+    left: 26%;
 }
 
 /* 左側プレイヤーのボタン、点数、フリテン表示は回転 */
