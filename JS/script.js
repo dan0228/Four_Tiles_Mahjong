@@ -11,12 +11,9 @@ const PLAYER_IDS = ['left', 'bottom', 'right', 'top'];
 let gameStarted = false;
 let currentPlayerIndex = 0;
 let isRonDeclared = false; // ロン宣言
-let isRonPossible = false; // ロン可能
 let isPonDeclared = false; // ポン宣言
-let isPonPossible = false; // ポン可能
 let isKanDeclared = false; // カン宣言
-let isKanPossible = false; // カン可能
-let isSkip = false; // スキップ
+let skipFlags = {}; // スキップ
 let isDealerHola = false; // 親和了
 let isRoundEnding = false; // 局の終了処理中かどうかを示すフラグ
 let remainingTilesCount = 136; // 残り牌数
@@ -406,8 +403,6 @@ async function proceedToNextRound() {
     }
 
     // フラグの初期化
-    isRonPossible = false;
-    isSkip = false;
     isDealerHola = false;
     isRonDeclared = false;
 
@@ -523,22 +518,6 @@ function startTurn(playerId) {
 }
 
 /**
- * 最後に追加された牌にクリックイベントリスナーを設定する
- * @param {string} playerId プレイヤーID
- */
-function setupLastTileClickListener(playerId) {
-    const playerHandElement = playerHandElements[playerId];
-    const lastTileElement = playerHandElement.lastChild; // 最後に追加された牌を取得
-
-    if (lastTileElement) {
-        lastTileElement.addEventListener('click', () => {
-            const tile = lastTileElement.textContent;
-            handleTileClick(playerId, tile, lastTileElement);
-        });
-    }
-}
-
-/**
  * 現在のプレイヤーのターンを終了し、次のプレイヤーにターンを移す
  */
 function endTurn() {
@@ -577,11 +556,6 @@ function handleTileClick(playerId, tile, tileElement) {
  * @param {string} discardedTile 捨てられた牌の文字列
  */
 async function handleDiscardAction(playerId, discardedTile) {
-    // ロン判定前にフラグをリセット
-    isSkip = false;
-    isPonPossible = false;
-    isKanPossible = false;
-
     // 捨て牌リストを更新
     discardedTiles[playerId] = discardedTile;
 
@@ -595,6 +569,11 @@ async function handleDiscardAction(playerId, discardedTile) {
     for (let i = 1; i < PLAYER_IDS.length; i++) {
         const otherPlayerIndex = (currentPlayerIndex + i) % PLAYER_IDS.length;
         const otherPlayerId = PLAYER_IDS[otherPlayerIndex];
+
+        let isRonPossible = false; // ロン可能
+        let isPonPossible = false; // ポン可能
+        let isKanPossible = false; // カン可能
+        skipFlags[otherPlayerId] = false;
 
         // フリテンでなく、ロン可能か
         if (!isFuriten[otherPlayerId] && checkRon(otherPlayerId, playerId)) {
@@ -643,38 +622,26 @@ async function handleDiscardAction(playerId, discardedTile) {
             setupSkipButtonListener(otherPlayerId, true);
         }
 
-        while ((isRonPossible || isPonPossible || isKanPossible) && !isSkip) {
+        while ((isRonPossible || isPonPossible || isKanPossible) && !skipFlags[otherPlayerId]) {
             isAllNotDeclaration = false;
             // 誰かがロンかポンかカンが成立したら関数を終了
             if (isRonDeclared || isRonDeclared || isKanDeclared) {
                 isRonDeclared = false;
-                isRonPossible = false;
-                isPonPossible = false;
                 isPonDeclared = false;
-                isKanPossible = false;
                 isKanDeclared = false;
-                isSkip = false;
+                skipFlags[otherPlayerId] = false;
                 return;
             }
             // 一定時間待機 (ブラウザがフリーズしないように)
             await new Promise(resolve => setTimeout(resolve, 100));
-            if (isSkip) {
-                isRonPossible = false;
-                isPonPossible = false;
-                isKanPossible = false;
-            }
         }
     }
 
     // 全員がロン、ポン、カン可能ではなかった場合もしくはスキップした場合にターンを終了
-    if (isAllNotDeclaration || isSkip) {
+    if (isAllNotDeclaration || Object.values(skipFlags).includes(true)) {
         endTurn();
     }
     isAllNotDeclaration = true;
-    isRonPossible = false;
-    isPonPossible = false;
-    isKanPossible = false;
-    isSkip = false;
 }
 
 /**
@@ -1385,6 +1352,9 @@ function showSkipButtons(playerId) {
 function setupSkipButtonListener(playerId, isTsumo) {
     const skipButton = skipButtons[playerId];
 
+    // 既存のイベントリスナーを削除
+    skipButton.removeEventListener('click', handleSkip);
+
     // 新しいイベントリスナーを設定
     skipButton.addEventListener('click', () => {
         handleSkip(playerId, isTsumo);
@@ -1411,7 +1381,7 @@ function handleSkip(playerId, isTsumo) {
         const furitenImage = document.getElementById(`${playerId}-furiten`);
         furitenImage.style.display = isFuriten[playerId] ? 'block' : 'none';
     }
-    isSkip = true;
+    skipFlags[playerId] = true;
 }
 
 /**
