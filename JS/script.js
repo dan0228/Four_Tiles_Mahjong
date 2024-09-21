@@ -28,7 +28,7 @@ let dealerIndex = Math.floor(Math.random() * PLAYER_IDS.length); // 親のイン
 
 // 牌の情報を格納する変数
 let allTiles = [];
-let discardedTiles = {}; // プレイヤーIDをキーに、最後に捨てられた牌を格納
+let discardedTiles = {}; // プレイヤーIDをキーに、捨てられた牌の配列を格納
 
 // DOM要素をキャッシュする
 let playerHandElements = {};
@@ -175,6 +175,7 @@ function removeTileFromHand(playerId, tileElement) {
  * @param {string} tile 牌の文字列表現
  */
 function addTileToDiscarded(playerId, tile) {
+    // 表示用の捨て牌に追加
     const playerDiscardedElement = playerDiscardedElements[playerId];
     if (!playerDiscardedElement) {
         console.error(`Element with ID ${playerId}-discarded not found.`);
@@ -183,8 +184,8 @@ function addTileToDiscarded(playerId, tile) {
     const discardedTileElement = createTileElement(tile, true); // 捨て牌であることを指定
     playerDiscardedElement.appendChild(discardedTileElement);
 
-    // 捨て牌リストを更新
-    discardedTiles[playerId] = tile;
+    // フリテン判定用捨て牌リストを更新
+    discardedTiles[playerId].push(tile);
 }
 
 /**
@@ -243,18 +244,16 @@ function initializeGame() {
     dealerIndex = Math.floor(Math.random() * PLAYER_IDS.length);
     currentPlayerIndex = dealerIndex; // 最初の親はランダムに決定
 
-    // 各プレイヤーに初期手牌を配る
-    PLAYER_IDS.forEach((playerId, index) => {
+    // 各プレイヤーの手牌、スコア、捨て牌を初期化
+    PLAYER_IDS.forEach((playerId) => {
         generateInitialHand(playerId);
-    });
-    // 残り牌数を初期化
-    remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
-
-    // プレイヤーの初期スコアを設定
-    PLAYER_IDS.forEach(playerId => {
+        discardedTiles[playerId] = [];
         playerScores[playerId] = 25000;
     });
     updatePlayerScoresDisplay();
+
+    // 残り牌数を初期化
+    remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
 
     // 最初のターンを開始
     startGame();
@@ -425,8 +424,8 @@ async function proceedToNextRound() {
     // 捨て牌エリアをリセット
     PLAYER_IDS.forEach(playerId => {
         playerDiscardedElements[playerId].innerHTML = ''; // 捨て牌をクリア
+        discardedTiles[playerId] = []; // 捨て牌リストをリセット
     });
-    discardedTiles = {}; // 捨て牌情報をリセット
 
     // 残り牌数を初期化
     remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
@@ -556,8 +555,6 @@ function handleTileClick(playerId, tile, tileElement) {
  * @param {string} discardedTile 捨てられた牌の文字列
  */
 async function handleDiscardAction(playerId, discardedTile) {
-    // 捨て牌リストを更新
-    discardedTiles[playerId] = discardedTile;
 
     // 現在のプレイヤーのインデックスを取得
     const currentPlayerIndex = PLAYER_IDS.indexOf(playerId);
@@ -662,7 +659,7 @@ function setupRonButtonListener(playerId) {
 
         // ロン処理の実装
         handleRon(playerId);
-    });
+    }, { once: true });
 }
 
 /**
@@ -677,7 +674,7 @@ function setupTsumoButtonListener(playerId) {
 
         // ツモ処理の実装
         handleTsumo(playerId);
-    });
+    }, { once: true });
 }
 
 /**
@@ -697,7 +694,7 @@ function setupPonButtonListener(playerId, targetPlayerId, tile) {
 
         // ポン処理の実装
         handlePon(playerId, targetPlayerId, tile)
-    });
+    }, { once: true });
 }
 
 /**
@@ -717,7 +714,7 @@ function setupKanButtonListener(playerId, targetPlayerId, tile) {
 
         // カン処理の実装
         handleKan(playerId, targetPlayerId, tile)
-    });
+    }, { once: true });
 }
 
 /**
@@ -772,7 +769,7 @@ function handlePon(playerId, targetPlayerId, tile) {
     // ポンした牌を手牌から削除
     removeTilesFromHand(playerId, tile, 2);
 
-    // 捨て牌からポンした牌を削除
+    // フリテン判定用捨て牌からポンした牌を削除
     removeTileFromDiscarded(targetPlayerId, tile);
 
     // ポンした牌を手牌に追加 (ポン表示)
@@ -805,7 +802,7 @@ function handleKan(playerId, targetPlayerId, tile) {
     // カンした牌を手牌から削除
     removeTilesFromHand(playerId, tile, 3);
 
-    // 捨て牌からカンした牌を削除 (他家からカンする場合)
+    // フリテン判定用捨て牌からカンした牌を削除 (他家からカンする場合)
     if (targetPlayerId !== null) {
         removeTileFromDiscarded(targetPlayerId, tile);
     }
@@ -878,7 +875,7 @@ function checkRon(playerId, discardPlayerId) {
     const handTiles = getHandTiles(playerId);
 
     // 最後に捨てられた牌を取得
-    const lastDiscardedTile = discardedTiles[discardPlayerId];
+    const lastDiscardedTile = discardedTiles[discardPlayerId][discardedTiles[discardPlayerId].length - 1];
 
     if (lastDiscardedTile) {
         return isWinningHand([...handTiles, lastDiscardedTile]);
@@ -1223,13 +1220,12 @@ function canDiscard(playerId) {
  */
 function updateFuritenStatus(playerId) {
     // 捨て牌にロン可能な牌が含まれているかチェック
-    const discardedTilesOfPlayer = playerDiscardedElements[playerId].querySelectorAll('.tile');
     const handTiles = getHandTiles(playerId);
     let isRonPossibleInDiscarded = false;
 
-    for (const discardedTileElement of discardedTilesOfPlayer) {
-        const discardedTile = discardedTileElement.querySelector('img').alt;
-        if (isWinningHand([...handTiles, discardedTile])) {
+    // フリテン判定用の捨て牌に対してのみチェック
+    for (const tile of discardedTiles[playerId]) {
+        if (tile && isWinningHand([...handTiles, tile])) {
             isRonPossibleInDiscarded = true;
             break;
         }
@@ -1358,7 +1354,8 @@ function setupSkipButtonListener(playerId, isTsumo) {
     // 新しいイベントリスナーを設定
     skipButton.addEventListener('click', () => {
         handleSkip(playerId, isTsumo);
-    });
+        // TODO 何度も呼ばれてポンスキップでフリテン
+    }, { once: true });
 }
 
 /**
