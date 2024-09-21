@@ -29,6 +29,7 @@ let dealerIndex = Math.floor(Math.random() * PLAYER_IDS.length); // 親のイン
 // 牌の情報を格納する変数
 let allTiles = [];
 let discardedTiles = {}; // プレイヤーIDをキーに、捨てられた牌の配列を格納
+let playerMeldElements = {}; // ポン、カンを表示する要素
 
 // DOM要素をキャッシュする
 let playerHandElements = {};
@@ -310,6 +311,7 @@ function cacheDOMElements() {
     PLAYER_IDS.forEach(playerId => {
         playerHandElements[playerId] = document.getElementById(playerId + '-hand');
         playerDiscardedElements[playerId] = document.getElementById(playerId + '-discarded');
+        playerMeldElements[playerId] = document.getElementById(playerId + '-melds');
         tsumoButtons[playerId] = document.getElementById(playerId + '-tsumo-button');
         ronButtons[playerId] = document.getElementById(playerId + '-ron-button');
         ponButtons[playerId] = document.getElementById(playerId + '-pon-button');
@@ -416,23 +418,16 @@ async function proceedToNextRound() {
     // 牌を初期化
     initializeTiles();
 
-    // 各プレイヤーの手牌をリセット
-    PLAYER_IDS.forEach(playerId => {
-        playerHandElements[playerId].innerHTML = ''; // 手牌をクリア
-    });
-
-    // 捨て牌エリアをリセット
-    PLAYER_IDS.forEach(playerId => {
-        playerDiscardedElements[playerId].innerHTML = ''; // 捨て牌をクリア
-        discardedTiles[playerId] = []; // 捨て牌リストをリセット
-    });
-
     // 残り牌数を初期化
     remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
     updateRemainingTilesDisplay();
 
-    // 各プレイヤーに初期手牌を配る
-    PLAYER_IDS.forEach((playerId, index) => {
+    // 各プレイヤーの手牌、鳴き牌、捨て牌をリセットし、初期手牌を配る
+    PLAYER_IDS.forEach(playerId => {
+        playerHandElements[playerId].innerHTML = ''; // 手牌をクリア
+        playerMeldElements[playerId].innerHTML = ''; // ポンした牌の要素を削除
+        playerDiscardedElements[playerId].innerHTML = ''; // 捨て牌をクリア
+        discardedTiles[playerId] = []; // 捨て牌リストをリセット
         generateInitialHand(playerId);
     });
 
@@ -622,7 +617,7 @@ async function handleDiscardAction(playerId, discardedTile) {
         while ((isRonPossible || isPonPossible || isKanPossible) && !skipFlags[otherPlayerId]) {
             isAllNotDeclaration = false;
             // 誰かがロンかポンかカンが成立したら関数を終了
-            if (isRonDeclared || isRonDeclared || isKanDeclared) {
+            if (isRonDeclared || isPonDeclared || isKanDeclared) {
                 isRonDeclared = false;
                 isPonDeclared = false;
                 isKanDeclared = false;
@@ -756,7 +751,7 @@ function handleTsumo(playerId) {
         });
     }
 }
-// TODO: ポンとカンの処理見直し
+
 /**
  * ポン処理を行う
  * @param {string} playerId ポンをしたプレイヤーID
@@ -769,22 +764,40 @@ function handlePon(playerId, targetPlayerId, tile) {
     // ポンした牌を手牌から削除
     removeTilesFromHand(playerId, tile, 2);
 
-    // フリテン判定用捨て牌からポンした牌を削除
+    // 表示用捨て牌からポンした牌を削除
     removeTileFromDiscarded(targetPlayerId, tile);
 
-    // ポンした牌を手牌に追加 (ポン表示)
-    addTileToHand(playerId, tile);
-    addTileToHand(playerId, tile);
-    addTileToHand(playerId, tile);
-
-    // 手牌をソート
-    sortHand(playerId);
+    // ポンした牌を表示する
+    const meldContainer = document.createElement('div'); // ポン牌をまとめるコンテナ
+    meldContainer.classList.add('meld'); // スタイル適用のためクラスを追加
+    for (let i = 0; i < 3; i++) {
+        const ponTileElement = createTileElement(tile);
+        // 左の牌を横向きにする場合
+        if (i === 0 && ((playerId === 'left' && targetPlayerId === 'top') ||
+            (playerId === 'top' && targetPlayerId === 'right') ||
+            (playerId === 'right' && targetPlayerId === 'bottom') ||
+            (playerId === 'bottom' && targetPlayerId === 'left'))) {
+            ponTileElement.classList.add('horizontal');
+        } else if (i === 1 && ((playerId === 'left' && targetPlayerId === 'right') ||
+            (playerId === 'top' && targetPlayerId === 'bottom') ||
+            (playerId === 'right' && targetPlayerId === 'left') ||
+            (playerId === 'bottom' && targetPlayerId === 'top'))) {
+            ponTileElement.classList.add('horizontal');
+        } else if (i === 2 && ((playerId === 'left' && targetPlayerId === 'bottom') ||
+            (playerId === 'top' && targetPlayerId === 'left') ||
+            (playerId === 'right' && targetPlayerId === 'top') ||
+            (playerId === 'bottom' && targetPlayerId === 'right'))) {
+            ponTileElement.classList.add('horizontal');
+        }
+        meldContainer.appendChild(ponTileElement);
+    }
+    playerMeldElements[playerId].appendChild(meldContainer);
 
     // ターンをポンしたプレイヤーに移す
     currentPlayerIndex = PLAYER_IDS.indexOf(playerId);
 
     // ポン音を再生
-    // TODO: ポン音を再生する処理を追加
+    playSound(dahaiSound);
 
     // 処理の終了を待つ
     isPonDeclared = true;
@@ -820,7 +833,7 @@ function handleKan(playerId, targetPlayerId, tile) {
     currentPlayerIndex = PLAYER_IDS.indexOf(playerId);
 
     // カン音を再生
-    // TODO: カン音を再生する処理を追加
+    playSound(dahaiSound);
 
     // 牌を一枚引く
     drawTile(playerId);
@@ -836,10 +849,39 @@ function handleKan(playerId, targetPlayerId, tile) {
  */
 function removeTileFromDiscarded(playerId, tile) {
     const playerDiscardedElement = playerDiscardedElements[playerId];
-    const tileElement = Array.from(playerDiscardedElement.children).find(tileElement => tileElement.textContent === tile);
-    if (tileElement) {
-        playerDiscardedElement.removeChild(tileElement);
-    }
+    // playerDiscardedElement.children を配列に変換
+    const discardedTiles = Array.from(playerDiscardedElement.children);
+    discardedTiles.forEach(tileElement => {
+        // 牌の種類を表す文字列を取得
+        const tileText = tileElement.querySelector('img').alt;
+
+        if (tileText === tile) {
+            playerDiscardedElement.removeChild(tileElement);
+            // 1枚削除したらループを抜ける
+            return;
+        }
+    });
+}
+
+/**
+ * 指定されたプレイヤーの手牌から、指定された牌を指定された枚数削除する
+ * @param {string} playerId プレイヤーID
+ * @param {string} tile 削除する牌
+ * @param {number} count 削除する枚数
+ */
+function removeTilesFromHand(playerId, tile, count) {
+    const playerHandElement = playerHandElements[playerId];
+    // playerHandElement.children を配列に変換
+    const tiles = Array.from(playerHandElement.children);
+    let removedCount = 0; // 削除済みの牌の枚数をカウントする変数
+    tiles.forEach(tileElement => {
+        // 牌の種類を表す文字列を取得
+        const tileText = tileElement.querySelector('img').alt;
+        if (removedCount < count && tileText === tile) {
+            playerHandElement.removeChild(tileElement);
+            removedCount++;
+        }
+    });
 }
 
 // --- 判定に関する関数 ---
@@ -890,8 +932,8 @@ function checkRon(playerId, discardPlayerId) {
  * @returns {boolean} 和了かどうか
  */
 function isWinningHand(tiles) {
-    if (tiles.length !== 5) {
-        return false; // 牌の数が5枚でなければ和了ではない
+    if (tiles.length !== 5 && tiles.length !== 2) {
+        return false; // 牌の数が5枚か2枚でなければ和了ではない
     }
 
     // 牌を種類と数字に分離してソート
@@ -920,61 +962,68 @@ function isWinningHand(tiles) {
         return false;
     }
 
-    // 対子(候補)を取り除いた牌のリストを作成
-    const remainingTiles = sortedTiles.filter(tile => {
-        // 字牌の場合、数字を含めない
-        const tileKey = tile.number !== null ? `${tile.suit}${tile.number}` : `${tile.suit}`;
-        return tileKey !== pairTile;
-    });
-    if (storeKotsu) {
-        if (remainingTiles.length > 0) {
-            // pairTileが字牌かどうかを判定
-            if (SUIT_TYPES.includes(pairTile.slice(0, 1))) {
-                // 数牌の場合のみ、数字を抽出
-                const [suit, number] = pairTile.match(/(.+)(\d+)/).slice(1);
-                remainingTiles.push({ suit, number: parseInt(number) });
-            } else {
-                // 字牌の場合は、種類のみを抽出
-                const suit = pairTile;
-                remainingTiles.push({ suit, number: null });
+    if (tiles.length === 2) {
+        // 手牌が2枚の場合は対子になれば和了
+        if (pairTile != null) {
+            return true;
+        }
+    } else if (tiles.length === 5) {
+        // 対子(候補)を取り除いた牌のリストを作成
+        const remainingTiles = sortedTiles.filter(tile => {
+            // 字牌の場合、数字を含めない
+            const tileKey = tile.number !== null ? `${tile.suit}${tile.number}` : `${tile.suit}`;
+            return tileKey !== pairTile;
+        });
+        if (storeKotsu) {
+            if (remainingTiles.length > 0) {
+                // pairTileが字牌かどうかを判定
+                if (SUIT_TYPES.includes(pairTile.slice(0, 1))) {
+                    // 数牌の場合のみ、数字を抽出
+                    const [suit, number] = pairTile.match(/(.+)(\d+)/).slice(1);
+                    remainingTiles.push({ suit, number: parseInt(number) });
+                } else {
+                    // 字牌の場合は、種類のみを抽出
+                    const suit = pairTile;
+                    remainingTiles.push({ suit, number: null });
+                }
             }
         }
-    }
 
-    // remainingTilesをソート
-    remainingTiles.sort((a, b) => {
-        if (a.suit === b.suit) {
-            return a.number - b.number;
-        } else {
-            return a.suit.localeCompare(b.suit);
+        // remainingTilesをソート
+        remainingTiles.sort((a, b) => {
+            if (a.suit === b.suit) {
+                return a.number - b.number;
+            } else {
+                return a.suit.localeCompare(b.suit);
+            }
+        });
+
+        // 残りの牌が順子または刻子で構成されているか判定
+        if (checkMeld(remainingTiles)) {
+            // TODO: 役判定
+            return true;
         }
-    });
 
-    // 残りの牌が順子または刻子で構成されているか判定
-    if (checkMeld(remainingTiles)) {
-        // TODO: 役判定
-        return true;
-    }
-
-    // 大四喜、小四喜パターンの判定
-    if (isSpecialHand1(tileCounts)) {
-        // tilesの最初の４つが東南西北か
-        if (tiles.slice(0, 4).every(tile => ['東', '南', '西', '北'].includes(tile.suit))) {
-            // Todo 大四喜
-        } else {
-            // Todo 小四喜
+        // 大四喜、小四喜パターンの判定
+        if (isSpecialHand1(tileCounts)) {
+            // tilesの最初の４つが東南西北か
+            if (tiles.slice(0, 4).every(tile => ['東', '南', '西', '北'].includes(tile.suit))) {
+                // Todo 大四喜
+            } else {
+                // Todo 小四喜
+            }
+            return true;
         }
-        return true;
-    }
 
-    // 大三元パターンの判定
-    if (isSpecialHand2(tileCounts)) {
-        return true;
-    }
+        // 大三元パターンの判定
+        if (isSpecialHand2(tileCounts)) {
+            return true;
+        }
 
-    // 清老頭パターンの判定
-    if (isSpecialHand3(tileCounts)) {
-        return true;
+        // 清老頭パターンの判定
+        if (isSpecialHand3(tileCounts)) {
+            return true;
+        }
     }
 }
 
@@ -1211,7 +1260,7 @@ function shuffle(array) {
  */
 function canDiscard(playerId) {
     const playerHandElement = playerHandElements[playerId];
-    return playerHandElement.children.length > 4;
+    return playerHandElement.children.length === 5 || playerHandElement.children.length === 2;
 }
 
 /**

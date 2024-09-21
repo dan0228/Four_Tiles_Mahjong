@@ -81,6 +81,7 @@ html {
 }
 
 .player-hand {
+    position: absolute;
     display: flex;
     flex-wrap: nowrap;
     width: 40%;
@@ -96,22 +97,22 @@ html {
 
     /* 各プレイヤーの捨て牌エリアの位置を調整 */
     &#bottom-discarded {
-        top: 35%;
+        top: 21.5%;
         left: 31%;
     }
 
     &#left-discarded {
-        top: -60%;
-        left: 32%;
+        top: -135%;
+        left: 31%;
     }
 
     &#right-discarded {
-        top: -60%;
-        right: 52%;
+        top: -135%;
+        right: 51%;
     }
 
     &#top-discarded {
-        top: 35%;
+        top: -295%;
         left: 31%;
     }
 }
@@ -125,40 +126,40 @@ html {
 #bottom-player {
     position: absolute;
     left: 60%;
-    bottom: 1%;
+    bottom: 9.9%;
     transform: translateX(-50%);
     width: 100%;
-    padding-top: calc(46% * (9 / 16));
+    padding-top: calc(34% * (9 / 16));
 }
 
 #left-player {
     position: absolute;
-    left: -80%;
-    top: 143%;
+    left: -77%;
+    top: 151%;
     transform: translateY(-50%) rotate(90deg);
     transform-origin: bottom right;
     width: 100%;
-    padding-top: calc(13% * (9 / 16));
+    padding-top: calc(11.5% * (9 / 16));
 }
 
 #right-player {
     position: absolute;
-    right: -80%;
-    top: 108%;
+    right: -77%;
+    top: 115.5%;
     transform: translateY(-50%) rotate(-90deg);
     transform-origin: bottom left;
     width: 100%;
-    padding-top: calc(13% * (9 / 16));
+    padding-top: calc(11.5% * (9 / 16));
 }
 
 #top-player {
     position: absolute;
-    top: -55%;
+    top: 3.6%;
     left: 40%;
     transform: translateX(-50%) rotate(180deg);
     transform-origin: bottom center;
     width: 100%;
-    padding-top: calc(46% * (9 / 16));
+    padding-top: calc(6.7% * (9 / 16));
 }
 
 .tile.manzu {
@@ -333,36 +334,39 @@ html {
     left: 26%;
 }
 
-/* 左側プレイヤーのボタン、点数、フリテン表示は回転 */
+/* 左側プレイヤーのボタン、点数、フリテン表示、鳴き牌は回転 */
 #left-tsumo-button,
 #left-ron-button,
 #left-kan-button,
 #left-skip-button,
 #left-pon-button,
 #left-score,
-#left-furiten {
+#left-furiten,
+#left-melds {
     transform: rotate(90deg);
 }
 
-/* 右側プレイヤーのボタン、点数、フリテン表示は回転 */
+/* 右側プレイヤーのボタン、点数、フリテン表示、鳴き牌は回転 */
 #right-tsumo-button,
 #right-ron-button,
 #right-kan-button,
 #right-skip-button,
 #right-pon-button,
 #right-score,
-#right-furiten {
+#right-furiten,
+#right-melds {
     transform: rotate(-90deg);
 }
 
-/* 上側プレイヤーのボタン、点数、フリテン表示は回転 */
+/* 上側プレイヤーのボタン、点数、フリテン表示、鳴き牌は回転 */
 #top-tsumo-button,
 #top-ron-button,
 #top-kan-button,
 #top-skip-button,
 #top-pon-button,
 #top-score,
-#top-furiten {
+#top-furiten,
+#top-melds {
     transform: rotate(180deg);
 }
 
@@ -518,4 +522,47 @@ html {
 #top-furiten {
     top: -95%;
     left: 60%;
+}
+
+/* ポン、カン牌のスタイル*/
+.meld {
+    display: flex;
+    flex-direction: row;
+    width: 40%;
+}
+
+#bottom-melds {
+    position: absolute;
+    top: 89%;
+    left: 75%;
+    width: 100%;
+}
+
+#left-melds {
+    position: absolute;
+    top: 140%;
+    left: -38%;
+    width: 100%;
+}
+
+#right-melds {
+    position: absolute;
+    top: -60%;
+    left: 38%;
+    width: 100%;
+}
+
+#top-melds {
+    position: absolute;
+    top: 0%;
+    left: -74%;
+    width: 100%;
+}
+
+/* ポン、カン牌を回転させる */
+.horizontal {
+    transform: rotate(90deg);
+    margin-top: 5px;
+    margin-left: 5px;
+    margin-right: 9px;
 }
