@@ -15,7 +15,7 @@ html {
     position: relative;
     width: 100vw;
     height: 100vh;
-    background-image: url('../Picture/麻雀マット.png');
+    background-image: url('../Picture/mat.png');
     background-size: cover;
     background-repeat: no-repeat;
     border: none;
@@ -24,7 +24,7 @@ html {
 
 #left-edge {
     position: absolute;
-    background-image: url('../Picture/麻雀卓_左枠.png');
+    background-image: url('../Picture/left_frame.png');
     background-color: transparent;
     background-size: contain;
     background-repeat: no-repeat;
@@ -38,7 +38,7 @@ html {
 
 #right-edge {
     position: absolute;
-    background-image: url('../Picture/麻雀卓_右枠.png');
+    background-image: url('../Picture/right_frame.png');
     background-color: transparent;
     background-size: contain;
     background-repeat: no-repeat;
@@ -179,7 +179,7 @@ html {
 #left-tsumo-button,
 #right-tsumo-button,
 #top-tsumo-button {
-    background-image: url('../Picture/ツモ.png');
+    background-image: url('../Picture/tsumo.png');
     background-color: transparent;
     background-size: contain;
     background-repeat: no-repeat;
@@ -195,7 +195,7 @@ html {
 #left-ron-button,
 #right-ron-button,
 #top-ron-button {
-    background-image: url('../Picture/ロン.png');
+    background-image: url('../Picture/ron.png');
     background-color: transparent;
     background-size: contain;
     background-repeat: no-repeat;
@@ -211,7 +211,7 @@ html {
 #left-kan-button,
 #right-kan-button,
 #top-kan-button {
-    background-image: url('../Picture/カン.png');
+    background-image: url('../Picture/kan.png');
     background-color: transparent;
     background-size: contain;
     background-repeat: no-repeat;
@@ -259,7 +259,7 @@ html {
 #left-skip-button,
 #right-skip-button,
 #top-skip-button {
-    background-image: url('../Picture/スキップ.png');
+    background-image: url('../Picture/skip.png');
     background-color: transparent;
     background-size: contain;
     background-repeat: no-repeat;
@@ -299,7 +299,7 @@ html {
 #left-pon-button,
 #right-pon-button,
 #top-pon-button {
-    background-image: url('../Picture/ポン.png');
+    background-image: url('../Picture/pon.png');
     background-color: transparent;
     background-size: contain;
     background-repeat: no-repeat;
@@ -493,7 +493,7 @@ html {
 #right-furiten,
 #top-furiten {
     position: absolute;
-    background-image: url('../Picture/フリテン.png');
+    background-image: url('../Picture/furiten.png');
     background-color: transparent;
     background-size: contain;
     background-repeat: no-repeat;
@@ -510,13 +510,13 @@ html {
 }
 
 #left-furiten {
-    top: -32%;
-    left: -8.5%;
+    top: -30%;
+    left: -11%;
 }
 
 #right-furiten {
-    top: 21.5%;
-    left: 98.5%;
+    top: 23%;
+    left: 101%;
 }
 
 #top-furiten {
@@ -547,7 +547,7 @@ html {
 
 #right-melds {
     position: absolute;
-    top: -60%;
+    top: -50%;
     left: 38%;
     width: 100%;
 }
@@ -565,4 +565,10 @@ html {
     margin-top: 5px;
     margin-left: 5px;
     margin-right: 9px;
+}
+
+/* 加カン牌のサイズを設定する */
+.horizontal img[src*="_double.png"] {
+    width: 200%;
+    margin-left: -100%;
 }
