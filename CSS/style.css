@@ -234,7 +234,7 @@ html {
 #left-tsumo-button,
 #left-kan-button {
     position: absolute;
-    top: 79%;
+    top: 75%;
     left: 21%;
 }
 
@@ -278,7 +278,7 @@ html {
 
 #left-skip-button {
     position: absolute;
-    top: 78%;
+    top: 74%;
     left: 12%;
 }
 
@@ -318,7 +318,7 @@ html {
 
 #left-pon-button {
     position: absolute;
-    top: 79%;
+    top: 75%;
     left: 16.8%;
 }
 
@@ -415,11 +415,11 @@ html {
     height: auto;
 }
 
-/* 残千点棒表示のスタイル */
+/* 供託表示のスタイル */
 #zan-tenbou-image {
     position: absolute;
-    top: 48.9%;
-    left: 47%;
+    top: 48.6%;
+    left: 47.4%;
     background-image: url('../Picture/zan_1000.png');
     background-color: transparent;
     background-size: contain;
@@ -427,7 +427,16 @@ html {
     border: none;
     display: block;
     width: 10%;
-    height: 1.8%;
+    height: 2.5%;
+}
+
+/* 供託の各桁の画像のサイズを調整 */
+#riichi-deposit-ones {
+    position: absolute;
+    top: 48%;
+    left: 51.4%;
+    width: 1.3%;
+    height: auto;
 }
 
 /* ミュートボタンのスタイル */
@@ -571,4 +580,30 @@ html {
 .horizontal img[src*="_double.png"] {
     width: 200%;
     margin-left: -100%;
+}
+
+/* 王牌のスタイル */
+#wall-tiles {
+    position: absolute;
+    top: 88%;
+    left: 12%;
+    width: 100%;
+}
+
+#wall-tiles img {
+    width: 4%;
+    float: left;
+}
+
+/* ドラ表示牌のスタイル */
+#dora-tiles {
+    position: absolute;
+    top: 88%;
+    left: 12%;
+    width: 100%;
+}
+
+#dora-tiles img {
+    width: 4%;
+    float: left;
 }

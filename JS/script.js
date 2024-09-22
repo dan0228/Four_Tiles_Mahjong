@@ -13,11 +13,13 @@ let currentPlayerIndex = 0;
 let isRonDeclared = false; // ロン宣言
 let isPonDeclared = false; // ポン宣言
 let isKanDeclared = false; // カン宣言
+let isMinkanOrKakanDeclared = false; // 明カンまたは加カンが宣言されたかどうか
 let skipFlags = {}; // スキップ
 let isDealerHola = false; // 親和了
 let isRoundEnding = false; // 局の終了処理中かどうかを示すフラグ
 let remainingTilesCount = 136; // 残り牌数
 let playerScores = {}; // プレイヤーの点数を格納するオブジェクト
+let riichiDeposit = 3; // リーチ棒の供託数
 
 // フリテン状態を示す変数を追加
 let isFuriten = {}; // プレイヤーIDをキーに、フリテン状態を格納
@@ -30,6 +32,9 @@ let dealerIndex = Math.floor(Math.random() * PLAYER_IDS.length); // 親のイン
 let allTiles = [];
 let discardedTiles = {}; // プレイヤーIDをキーに、捨てられた牌の配列を格納
 let playerMeldElements = {}; // ポン、カンを表示する要素
+let wallTiles = []; // 王牌
+let doraTiles = []; // ドラ
+let doraTileNumber = 1; // ドラ表示数
 
 // DOM要素をキャッシュする
 let playerHandElements = {};
@@ -242,9 +247,6 @@ function initializeGame() {
     // DOM要素をキャッシュ
     cacheDOMElements();
 
-    // 残り牌数の表示を更新
-    updateRemainingTilesDisplay();
-
     // 親を初期化
     dealerIndex = Math.floor(Math.random() * PLAYER_IDS.length);
     currentPlayerIndex = dealerIndex; // 最初の親はランダムに決定
@@ -257,8 +259,18 @@ function initializeGame() {
     });
     updatePlayerScoresDisplay();
 
+    // 王牌を設定
+    wallTiles = allTiles.splice(0, 14);
+    displayWallTiles();
+
+    // ドラ表示牌を設定
+    displayDoraTile(doraTileNumber);
+
     // 残り牌数を初期化
-    remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
+    remainingTilesCount = allTiles.length;
+
+    // 供託を初期化
+    updateRiichiDepositDisplay();
 
     // 最初のターンを開始
     startGame();
@@ -295,7 +307,8 @@ function initializeTiles() {
             // 各数牌を4枚ずつpush
             for (let j = 0; j < 4; j++) {
                 allTiles.push(i + suit);
-                //TODO テスト用 allTiles.push('3萬');
+                //TODO テスト用 
+                //allTiles.push('3萬');
             }
         }
     });
@@ -346,6 +359,19 @@ function updateRemainingTilesDisplay() {
 }
 
 /**
+ * リーチ棒の供託数表示を更新する
+ */
+function updateRiichiDepositDisplay() {
+    const onesImage = document.getElementById("riichi-deposit-ones");
+
+    // riichiDeposit を1桁の文字列に変換
+    const depositString = riichiDeposit.toString().padStart(1, '0');
+
+    // 各桁の画像を設定
+    onesImage.src = `Picture/number/${depositString[0]}w.png`;
+}
+
+/**
  * プレイヤーの点数表示を更新する
  */
 function updatePlayerScoresDisplay() {
@@ -361,6 +387,91 @@ function updatePlayerScoresDisplay() {
             scoreElement.appendChild(digitImage);
         }
     });
+}
+
+// 王牌を表示する
+function displayWallTiles() {
+    const wallTilesContainer = document.getElementById('wall-tiles-container');
+    wallTilesContainer.innerHTML = ''; // 既存の牌をクリア
+
+    // 最初の4牌のみを表示
+    for (let i = 0; i < 4; i++) {
+        const tile = wallTiles[i];
+        const imgElement = document.createElement('img');
+        imgElement.src = `picture/tiles/ura.png`;
+        imgElement.alt = tile;
+        wallTilesContainer.appendChild(imgElement);
+    }
+}
+
+/**
+ * ドラ表示牌を表示する
+ * @param {string} doraTileNumber ドラ表示数
+ */
+function displayDoraTile(doraTileNumber) {
+    const doraTileElement = document.getElementById('dora-tiles');
+    doraTileElement.innerHTML = ''; // 既存の牌をクリア
+    doraTiles = [];
+
+    // ドラ表示牌の数を考慮して表示
+    for (let i = 0; i < doraTileNumber; i++) {
+        const tile = wallTiles[i];
+        const imgElement = document.createElement('img');
+        const suit = tile.slice(-1);
+        const number = SUIT_TYPES.includes(suit) ? tile.slice(0, -1) : null;
+
+        // 画像ファイル名を生成
+        let imgFileName = "";
+        if (number !== null) {
+            // 数牌の場合
+            switch (suit) {
+                case '萬': imgFileName = `manzu_${number}.png`; break;
+                case '筒': imgFileName = `pinzu_${number}.png`; break;
+                case '索': imgFileName = `sozu_${number}.png`; break;
+            }
+        } else {
+            // 字牌の場合
+            switch (suit) {
+                case '東': imgFileName = "zi_ton.png"; break;
+                case '南': imgFileName = "zi_nan.png"; break;
+                case '西': imgFileName = "zi_sha.png"; break;
+                case '北': imgFileName = "zi_pei.png"; break;
+                case '白': imgFileName = "zi_haku.png"; break;
+                case '發': imgFileName = "zi_hatsu.png"; break;
+                case '中': imgFileName = "zi_chun.png"; break;
+            }
+        }
+
+        imgElement.src = `picture/tiles/${imgFileName}`;
+        imgElement.alt = tile;
+        doraTileElement.appendChild(imgElement);
+
+        let nextTile = null;
+
+        if (number !== null) {
+            // 数牌の場合
+            let nextNumber = number === 9 ? 1 : parseInt(number) + 1;
+            let nextSuit = suit;
+            nextTile = nextNumber + nextSuit;
+        } else {
+            // 字牌の場合
+            const windTiles = ['東', '南', '西', '北'];
+            const dragonTiles = ['白', '發', '中'];
+
+            if (windTiles.includes(suit)) {
+                // 東南西北の場合
+                const tileIndex = windTiles.indexOf(suit);
+                nextTile = windTiles[(tileIndex + 1) % windTiles.length];
+            } else if (dragonTiles.includes(suit)) {
+                // 白發中の場合
+                const tileIndex = dragonTiles.indexOf(suit);
+                nextTile = dragonTiles[(tileIndex + 1) % dragonTiles.length];
+            }
+        }
+
+        doraTiles.push(nextTile);
+        isMinkanOrKakanDeclared = false;
+    }
 }
 
 /**
@@ -414,12 +525,10 @@ async function proceedToNextRound() {
         furitenImage.style.display = 'none';
     });
 
-    // 牌を初期化
+    // 牌と供託を初期化
     initializeTiles();
-
-    // 残り牌数を初期化
-    remainingTilesCount = allTiles.length - 13; //ドラ以外の王牌を引く
-    updateRemainingTilesDisplay();
+    riichiDeposit = 0;
+    updateRiichiDepositDisplay();
 
     // 各プレイヤーの手牌、鳴き牌、捨て牌をリセットし、初期手牌を配る
     PLAYER_IDS.forEach(playerId => {
@@ -429,6 +538,18 @@ async function proceedToNextRound() {
         discardedTiles[playerId] = []; // 捨て牌リストをリセット
         generateInitialHand(playerId);
     });
+
+    // 王牌を設定
+    wallTiles = allTiles.splice(0, 14);
+    displayWallTiles();
+
+    // ドラ表示牌を設定
+    doraTileNumber = 1;
+    displayDoraTile(doraTileNumber);
+
+    // 残り牌数を初期化
+    remainingTilesCount = allTiles.length;
+    updateRemainingTilesDisplay();
 
     // 新しい局を開始
     if (currentRound < 5) { // 4局未満なら次の局を開始（先に局数をインクリメントしているため5）
@@ -512,6 +633,13 @@ function handleTileClick(playerId, tile, tileElement) {
         removeTileFromHand(playerId, tileElement);
         addTileToDiscarded(playerId, tile);
         sortHand(playerId);
+
+        if (isMinkanOrKakanDeclared) {
+            // ドラを追加
+            doraTileNumber++;
+            displayDoraTile(doraTileNumber);
+            isMinkanOrKakanDeclared = false;
+        }
 
         // 打牌音を再生
         playSound(dahaiSound);
@@ -819,15 +947,20 @@ function handleKan(playerId, targetPlayerId, tile) {
         removeTilesFromHand(playerId, tile, 3);
         // 表示用捨て牌からカンした牌を削除
         removeTileFromDiscarded(targetPlayerId, tile);
+        isMinkanOrKakanDeclared = true;
     } else {
         // プレイヤーの手牌を取得
         const handTiles = getHandTiles(playerId);
         if (handTiles.filter(t => t === tile).length === 4) {
-            // カンした牌を手牌から削除
+            // 暗カンの場合、カンした牌を手牌から削除
             removeTilesFromHand(playerId, tile, 4);
+            // ドラを追加
+            doraTileNumber++;
+            displayDoraTile(doraTileNumber);
         } else { // 加カンの場合の処理
             removeTilesFromHand(playerId, tile, 1);
             isKakan = true;
+            isMinkanOrKakanDeclared = true;
         }
     }
 
@@ -1402,58 +1535,60 @@ function drawTile(playerId) {
         const tile = allTiles.pop();
         addTileToHand(playerId, tile, true);
 
-        // 加カン判定
-        if (checkKakan(playerId, tile)) {
-            // 加カンが可能なら、カンボタンとスキップボタンを表示
-            showKanButtons(playerId);
-            showSkipButtons(playerId);
-
-            // カンボタンのイベントリスナーを設定 (targetPlayerIdはnull)
-            setupKanButtonListener(playerId, null, tile);
-
-            // スキップボタンのイベントリスナーを設定
-            setupSkipButtonListener(playerId, true);
-        }
-
-        // 暗カン判定
-        const handTiles = getHandTiles(playerId);
-        const tileCounts = countTileOccurrences(separateAndSortTiles(handTiles));
-        let fourOfAKindTiles = '';
-
-        for (const tile in tileCounts) {
-            if (tileCounts[tile] === 4) {
-                fourOfAKindTiles = tile.slice(-1) + tile.slice(0, -1);
-                break;
-            }
-        }
-        if (checkKan(playerId, null)) {
-            // カンボタンとスキップボタンを表示
-            showKanButtons(playerId);
-            showSkipButtons(playerId);
-
-            // カンボタンのイベントリスナーを設定
-            setupKanButtonListener(playerId, null, fourOfAKindTiles);
-
-            // スキップボタンのイベントリスナーを設定
-            setupSkipButtonListener(playerId, true);
-        }
-
-        // ツモ判定を行う
-        checkTsumo(playerId);
-
-        if (isRonDeclared) {
-            return;
-        }
         // 残り牌数を更新
-        remainingTilesCount = allTiles.length - 13;
+        remainingTilesCount = allTiles.length;
         // 残り牌数の表示を更新
-        if (remainingTilesCount < 0) {
+        if (remainingTilesCount < 100) {
             console.log("流局です。次の局に進みます。");
             proceedToNextRound();
         } else {
             updateRemainingTilesDisplay();
             // ツモ音を再生
             playSound(dahaiSound);
+        }
+
+        if (remainingTilesCount >= 1) {
+            // 加カン判定
+            if (checkKakan(playerId, tile)) {
+                // 加カンが可能なら、カンボタンとスキップボタンを表示
+                showKanButtons(playerId);
+                showSkipButtons(playerId);
+
+                // カンボタンのイベントリスナーを設定 (targetPlayerIdはnull)
+                setupKanButtonListener(playerId, null, tile);
+
+                // スキップボタンのイベントリスナーを設定
+                setupSkipButtonListener(playerId, true);
+            }
+
+            // 暗カン判定
+            const handTiles = getHandTiles(playerId);
+            const tileCounts = countTileOccurrences(separateAndSortTiles(handTiles));
+            let fourOfAKindTiles = '';
+
+            for (const tile in tileCounts) {
+                if (tileCounts[tile] === 4) {
+                    fourOfAKindTiles = tile.slice(-1) + tile.slice(0, -1);
+                    break;
+                }
+            }
+            if (checkKan(playerId, null)) {
+                // カンボタンとスキップボタンを表示
+                showKanButtons(playerId);
+                showSkipButtons(playerId);
+
+                // カンボタンのイベントリスナーを設定
+                setupKanButtonListener(playerId, null, fourOfAKindTiles);
+
+                // スキップボタンのイベントリスナーを設定
+                setupSkipButtonListener(playerId, true);
+            }
+        }
+        // ツモ判定を行う
+        checkTsumo(playerId);
+
+        if (isRonDeclared) {
+            return;
         }
     }
 }
