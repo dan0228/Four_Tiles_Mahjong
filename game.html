@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四牌麻雀</title>
+    <link rel="stylesheet" href="CSS/game.css"> <!-- CSSファイルをリンク -->
+</head>
+
+<body>
+    <div id="app-container">
+        <div id="game-info">
+            <img id="game-info-image" src="" alt="Game Info">
+            <img id="round-image" src="" alt="Round">
+            <div id="zan-tenbou-image"></div>
+            <div id="remaining-tiles-images">
+                <img id="remaining-tiles-hundreds" src="" alt="">
+                <img id="remaining-tiles-tens" src="" alt="">
+                <img id="remaining-tiles-ones" src="" alt="">
+            </div>
+            <div id="riichi-deposit">
+                <img id="riichi-deposit-ones" src="" alt="">
+            </div>
+            <div id="player-scores">
+                <div id="left-score" class="player-score"></div>
+                <div id="bottom-score" class="player-score"></div>
+                <div id="right-score" class="player-score"></div>
+                <div id="top-score" class="player-score"></div>
+            </div>
+        </div>
+
+        <div id="wall-tiles">
+            <div id="wall-tiles-container">
+            </div>
+        </div>
+
+        <div id="dora-tiles"></div>
+
+        <div class="player-container" id="bottom-player">
+            <div id="bottom-discarded" class="player-discarded"></div>
+            <div class="player">
+                <div id="bottom-hand" class="player-hand"></div>
+            </div>
+        </div>
+        <div class="player-container" id="top-player">
+            <div id="top-discarded" class="player-discarded"></div>
+            <div class="player">
+                <div id="top-hand" class="player-hand"></div>
+            </div>
+        </div>
+        <div class="player-container" id="left-player">
+            <div id="left-discarded" class="player-discarded"></div>
+            <div class="player">
+                <div id="left-hand" class="player-hand"></div>
+            </div>
+        </div>
+        <div class="player-container" id="right-player">
+            <div id="right-discarded" class="player-discarded"></div>
+            <div class="player">
+                <div id="right-hand" class="player-hand"></div>
+            </div>
+        </div>
+
+        <div id="bottom-melds" class="melds"></div>
+        <div id="top-melds" class="melds"></div>
+        <div id="left-melds" class="melds"></div>
+        <div id="right-melds" class="melds"></div>
+
+        <img id="bottom-furiten" style="display: none;" src="" alt="">
+        <img id="top-furiten" style="display: none;" src="" alt="">
+        <img id="left-furiten" style="display: none;" src="" alt="">
+        <img id="right-furiten" style="display: none;" src="" alt="">
+
+        <button id="bottom-ron-button" style="display: none;"></button>
+        <button id="bottom-tsumo-button" style="display: none;"></button>
+        <button id="bottom-pon-button" style="display: none;"></button>
+        <button id="bottom-kan-button" style="display: none;"></button>
+        <button id="bottom-skip-button" style="display: none;"></button>
+
+        <button id="top-ron-button" style="display: none;"></button>
+        <button id="top-tsumo-button" style="display: none;"></button>
+        <button id="top-pon-button" style="display: none;"></button>
+        <button id="top-kan-button" style="display: none;"></button>
+        <button id="top-skip-button" style="display: none;"></button>
+
+        <button id="left-ron-button" style="display: none;"></button>
+        <button id="left-tsumo-button" style="display: none;"></button>
+        <button id="left-pon-button" style="display: none;"></button>
+        <button id="left-kan-button" style="display: none;"></button>
+        <button id="left-skip-button" style="display: none;"></button>
+
+        <button id="right-ron-button" style="display: none;"></button>
+        <button id="right-tsumo-button" style="display: none;"></button>
+        <button id="right-pon-button" style="display: none;"></button>
+        <button id="right-kan-button" style="display: none;"></button>
+        <button id="right-skip-button" style="display: none;"></button>
+
+        <img id="left-edge" src="" alt="">
+        <img id="right-edge" src="" alt="">
+
+        <button id="mute-button"></button>
+        <button id="back-to-title-button"></button>
+    </div>
+    <audio id="dahaiSound" src="Music/打牌.mp3" preload="auto"></audio>
+    <script src="JS/game.js"></script>
+</body>
+
+</html>
