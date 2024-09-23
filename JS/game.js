@@ -1195,7 +1195,7 @@ function isWinningHand(tiles) {
             return true;
         }
 
-        // 清老頭パターンの判定
+        // 三色同刻パターンの判定
         if (isSpecialHand3(tileCounts)) {
             return true;
         }
@@ -1274,50 +1274,36 @@ function isSpecialHand2(tileCounts) {
 }
 
 /**
- * 清老頭（一萬、一筒、一索か九萬、九筒、九索と、それらの頭二枚のパターンを判定する）
+ * 三色同刻（同じ数字の萬子、筒子、索子の3枚と頭二枚のパターンを判定する）
  * @param {object[]} tileCounts 各牌のカウント数
- * @returns {boolean} 一萬、一筒、一索か九萬、九筒、九索と、それらの頭二枚のパターンかどうか
+ * @returns {boolean} 同じ数字の萬子、筒子、索子の3枚と頭二枚のパターンかどうか
  */
 function isSpecialHand3(tileCounts) {
-    const targetTiles1 = ['萬1', '筒1', '索1'];
-    const targetTiles2 = ['萬9', '筒9', '索9'];
-    hasMan1Pin1Sou1 = false;
-    hasMan9Pin9Sou9 = false;
-    // 1萬1筒1索が全て含まれていないか判定
-    if (!targetTiles1.every(tile => tileCounts[tile] > 0)) {
-        hasMan1Pin1Sou1 = false;
-    } else {
-        for (const tileKey in tileCounts) {
-            // 1萬1筒1索のうちいずれかが3枚か
-            if (targetTiles1.includes(tileKey) && tileCounts[tileKey] === 3) {
-                hasMan1Pin1Sou1 = true;
+    // 各数字について、全ての牌の種類が存在するかを確認
+    // 数字のループ
+    for (let number = 1; number <= 9; number++) {
+        let hasAllSuits = true;
+        let isKotu = false;
+        // 牌の種類のループ
+        for (const suit of SUIT_TYPES) {
+            const tileKey = `${suit}${number}`;
+            // 1枚か3枚でないか判定
+            if (!(tileKey in tileCounts && (tileCounts[tileKey] === 1 || tileCounts[tileKey] === 3))) {
+                hasAllSuits = false;
                 break;
+            } else if (tileCounts[tileKey] === 3) {
+                isKotu = true;
             }
-            // 9萬9筒9索のうちいずれかで頭があるか
-            if (targetTiles2.includes(tileKey) && tileCounts[tileKey] === 2) {
-                hasMan1Pin1Sou1 = true;
-                break;
+        }
+        // 全ての牌の種類が存在しているか
+        if (hasAllSuits) {
+            // 刻子なら全ての種類と同じ牌の頭の判定、刻子でないなら全ての種類と別の牌の頭の判定
+            if (isKotu || Object.values(tileCounts).includes(2)) {
+                return true;
             }
         }
     }
-    // 9萬9筒9索が全て含まれていないか判定
-    if (!targetTiles2.every(tile => tileCounts[tile] > 0)) {
-        hasMan9Pin9Sou9 = false;
-    } else {
-        for (const tileKey in tileCounts) {
-            // 9萬9筒9索のうちいずれかが3枚か
-            if (targetTiles2.includes(tileKey) && tileCounts[tileKey] === 3) {
-                hasMan9Pin9Sou9 = true;
-                break;
-            }
-            // 1萬1筒1索のうちいずれかで頭があるか
-            if (targetTiles1.includes(tileKey) && tileCounts[tileKey] === 2) {
-                hasMan9Pin9Sou9 = true;
-                break;
-            }
-        }
-    }
-    return hasMan1Pin1Sou1 || hasMan9Pin9Sou9;
+    return false;
 }
 
 /**
