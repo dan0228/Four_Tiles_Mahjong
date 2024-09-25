@@ -20,9 +20,12 @@ let isRoundEnding = false; // 局の終了処理中かどうかを示すフラ�
 let remainingTilesCount = 136; // 残り牌数
 let playerScores = {}; // プレイヤーの点数を格納するオブジェクト
 let riichiDeposit = 0; // リーチ棒の供託数
+let isRiichi = {}; // プレイヤーの立直状態を格納
+let isFuriten = {}; // プレイヤーのフリテン状態を格納
+let melds = {}; // プレイヤーの鳴き牌情報を格納するオブジェクト
 
-// フリテン状態を示す変数を追加
-let isFuriten = {}; // プレイヤーIDをキーに、フリテン状態を格納
+// 和了情報を格納する変数
+let winningHandData = {};
 
 // 局数と親の順番を管理する変数を追加
 let currentRound = 1; // 現在の局数
@@ -35,6 +38,48 @@ let playerMeldElements = {}; // ポン、カンを表示する要素
 let wallTiles = []; // 王牌
 let doraTiles = []; // ドラ
 let doraTileNumber = 1; // ドラ表示数
+
+// 役の定義と翻数
+const YAKU = {
+    立直: { name: "立直", fans: 1 },
+    門前清自摸和: { name: "門前清自摸和", fans: 1 },
+    断么九: { name: "断么九", fans: 1 },
+    平和: { name: "平和", fans: 1 },
+    自風牌: { name: "自風牌", fans: 1 },
+    場風牌: { name: "場風牌", fans: 1 },
+    三元牌: { name: "三元牌", fans: 1 },
+    槍槓: { name: "槍槓", fans: 1 },
+    嶺上開花: { name: "嶺上開花", fans: 1 },
+    海底摸月: { name: "海底摸月", fans: 1 },
+    河底撈魚: { name: "河底撈魚", fans: 1 },
+    一発: { name: "一発", fans: 1 },
+    ダブル立直: { name: "ダブル立直", fans: 2 },
+    三色同刻: { name: "三色同刻", fans: 2 },
+    対々和: { name: "対々和", fans: 2 },
+    一暗刻: { name: "一暗刻", fans: 2 }, // 三暗刻の代用
+    小三元: { name: "小三元", fans: 2 },
+    混老頭: { name: "混老頭", fans: 2 },
+    混全帯么九: { name: "混全帯么九", fans: 2 },
+    純全帯么九: { name: "純全帯么九", fans: 3 },
+    混一色: { name: "混一色", fans: 3 },
+    清一色: { name: "清一色", fans: 3 }, // 清一色の難易度が低いため翻数を混一色と同じにする
+    流し満貫: { name: "流し満貫", fans: 5 },
+};
+
+// 役満の定義と役満数
+const YAKUMAN = {
+    天和: { name: "天和", power: 1 },
+    地和: { name: "地和", power: 1 },
+    人和: { name: "人和", power: 1 },
+    大三元: { name: "大三元", power: 1 },
+    字一色: { name: "字一色", power: 1 },
+    緑一色: { name: "緑一色", power: 1 },
+    清老頭: { name: "清老頭", power: 1 },
+    一槓子: { name: "一槓子", power: 1 }, // 四槓子の代用
+    小四喜: { name: "小四喜", power: 1 },
+    大四喜: { name: "大四喜", power: 2 },
+    一暗槓単騎: { name: "一暗槓単騎", power: 2 },
+}
 
 // DOM要素をキャッシュする
 let playerHandElements = {};
@@ -231,10 +276,11 @@ function initializeGame() {
     dealerIndex = Math.floor(Math.random() * PLAYER_IDS.length);
     currentPlayerIndex = dealerIndex; // 最初の親はランダムに決定
 
-    // 各プレイヤーの手牌、スコア、捨て牌を初期化
+    // 各プレイヤーの手牌、捨て牌、鳴き牌、スコアを初期化
     PLAYER_IDS.forEach((playerId) => {
         generateInitialHand(playerId);
         discardedTiles[playerId] = [];
+        melds[playerId] = [];
         playerScores[playerId] = 25000;
     });
     updatePlayerScoresDisplay();
@@ -497,25 +543,21 @@ async function proceedToNextRound() {
     isDealerHola = false;
     isRonDeclared = false;
 
-    // 各プレイヤーのフリテンフラグをリセット
-    PLAYER_IDS.forEach(playerId => {
-        isFuriten[playerId] = false;
-        // フリテン状態に応じて画像を表示/非表示
-        const furitenImage = document.getElementById(`${playerId}-furiten`);
-        furitenImage.style.display = 'none';
-    });
-
     // 牌と供託を初期化
     initializeTiles();
     riichiDeposit = 0;
     updateRiichiDepositDisplay();
 
-    // 各プレイヤーの手牌、鳴き牌、捨て牌をリセットし、初期手牌を配る
+    // 各プレイヤーの情報をリセットし、初期手牌を配る
     PLAYER_IDS.forEach(playerId => {
         playerHandElements[playerId].innerHTML = ''; // 手牌をクリア
         playerMeldElements[playerId].innerHTML = ''; // ポンした牌の要素を削除
         playerDiscardedElements[playerId].innerHTML = ''; // 捨て牌をクリア
         discardedTiles[playerId] = []; // 捨て牌リストをリセット
+        melds[playerId] = []; // 鳴き牌リストをクリア
+        isFuriten[playerId] = false; // フリテンをクリア
+        const furitenImage = document.getElementById(`${playerId}-furiten`);
+        furitenImage.style.display = 'none';
         generateInitialHand(playerId);
     });
 
@@ -829,6 +871,11 @@ function setupKanButtonListener(playerId, targetPlayerId, tile) {
 function handleRon(playerId) {
     console.log(`${playerId} がロンしました！`);
 
+    // 役判定結果を表示
+    console.log("役判定結果:", winningHandData);
+
+    // ... (winningHandData を利用した処理) ...
+
     // proceedToNextRound() の完了後に isRoundEnding を false に戻す
     if (!isRoundEnding) {
         // 親がロンした場合、親は変わらず次の局へは進まない
@@ -848,6 +895,11 @@ function handleRon(playerId) {
  */
 function handleTsumo(playerId) {
     console.log(`${playerId} がツモしました！`);
+
+    // 役判定結果を表示
+    console.log("役判定結果:", winningHandData);
+
+    // ... (winningHandData を利用した処理) ...
 
     // proceedToNextRound() の完了後に isRoundEnding を false に戻す
     if (!isRoundEnding) {
@@ -870,6 +922,12 @@ function handleTsumo(playerId) {
  */
 function handlePon(playerId, targetPlayerId, tile) {
     console.log(`${playerId} が ${tile} でポンしました！`);
+
+    // 鳴き牌情報をmeldsに格納
+    melds[playerId].push({
+        meldType: 'pon',
+        tiles: [tile, tile, tile],
+    });
 
     // ポンした牌を手牌から削除
     removeTilesFromHand(playerId, tile, 2);
@@ -922,12 +980,18 @@ function handleKan(playerId, targetPlayerId, tile) {
     console.log(`${playerId} が ${tile} でカンしました！`);
 
     let isKakan = false;
+
     if (targetPlayerId !== null) { // 明カンの場合
         // カンした牌を手牌から削除
         removeTilesFromHand(playerId, tile, 3);
         // 表示用捨て牌からカンした牌を削除
         removeTileFromDiscarded(targetPlayerId, tile);
         isMinkanOrKakanDeclared = true;
+        // 鳴き牌情報をmeldsに格納
+        melds[playerId].push({
+            meldType: 'minkan',
+            tiles: [tile, tile, tile, tile]
+        });
     } else {
         // プレイヤーの手牌を取得
         const handTiles = getHandTiles(playerId);
@@ -937,10 +1001,20 @@ function handleKan(playerId, targetPlayerId, tile) {
             // ドラを追加
             doraTileNumber++;
             displayDoraTile(doraTileNumber);
+            // 鳴き牌情報をmeldsに格納
+            melds[playerId].push({
+                meldType: 'ankan',
+                tiles: [tile, tile, tile, tile]
+            });
         } else { // 加カンの場合の処理
             removeTilesFromHand(playerId, tile, 1);
             isKakan = true;
             isMinkanOrKakanDeclared = true;
+            // 既存のポン情報を更新
+            melds[playerId][0] = {
+                meldType: 'kakan',
+                tiles: [tile, tile, tile, tile]
+            };
         }
     }
 
@@ -1068,8 +1142,8 @@ function removeTilesFromHand(playerId, tile, count) {
  */
 function checkTsumo(playerId) {
     const handTiles = getHandTiles(playerId);
-
-    if (isWinningHand(handTiles)) {
+    winningHandData = isWinningHand(handTiles, playerId, true);
+    if (winningHandData.isWinning) {
         // 該当するプレイヤーのツモボタンとスキップボタンを表示
         showTsumoButtons(playerId);
         showSkipButtons(playerId);
@@ -1095,7 +1169,8 @@ function checkRon(playerId, discardPlayerId) {
     const lastDiscardedTile = discardedTiles[discardPlayerId][discardedTiles[discardPlayerId].length - 1];
 
     if (lastDiscardedTile) {
-        return isWinningHand([...handTiles, lastDiscardedTile]);
+        winningHandData = isWinningHand([...handTiles, lastDiscardedTile], discardPlayerId, true);
+        return winningHandData.isWinning; // isWinningプロパティの値を返す
     }
 
     return false;
@@ -1104,11 +1179,25 @@ function checkRon(playerId, discardPlayerId) {
 /**
  * 和了判定を行う
  * @param {string[]} tiles 牌の文字列配列
- * @returns {boolean} 和了かどうか
+ * @param {string} playerId ツモの場合は自分、ロンの場合は牌を捨てたプレイヤー
+ * @param {boolean} yakuJudge 役判定を実施するか
+ * @returns {object} 和了判定結果、役のリストと合計翻数、または役満のリストと合計役満数
  */
-function isWinningHand(tiles) {
+function isWinningHand(tiles, PlayerId, yakuJudge) {
+    let isTanki = false;
+    let meld = false;
+    let isSpecial1 = false;
+    let isSpecial2 = false;
+    let isSpecial3 = false;
+
     if (tiles.length !== 5 && tiles.length !== 2) {
-        return false; // 牌の数が5枚か2枚でなければ和了ではない
+        return {  // 牌の数が5枚か2枚でなければ和了ではない
+            isWinning: false,
+            yaku: [],
+            fans: 0,
+            yakumanList: [],
+            yakumanPower: 0
+        };
     }
 
     // 牌を種類と数字に分離してソート
@@ -1134,13 +1223,19 @@ function isWinningHand(tiles) {
 
     // 対子(候補)がない場合は和了不可能
     if (pairTile === null) {
-        return false;
+        return {
+            isWinning: false,
+            yaku: [],
+            fans: 0,
+            yakumanList: [],
+            yakumanPower: 0
+        };
     }
 
     if (tiles.length === 2) {
         // 手牌が2枚の場合は対子になれば和了
         if (pairTile != null) {
-            return true;
+            isTanki = true;
         }
     } else if (tiles.length === 5) {
         // 対子(候補)を取り除いた牌のリストを作成
@@ -1149,6 +1244,7 @@ function isWinningHand(tiles) {
             const tileKey = tile.number !== null ? `${tile.suit}${tile.number}` : `${tile.suit}`;
             return tileKey !== pairTile;
         });
+        // 対子候補が3枚の場合は3枚削除されてしまうので1枚追加する
         if (storeKotsu) {
             if (remainingTiles.length > 0) {
                 // pairTileが字牌かどうかを判定
@@ -1174,43 +1270,86 @@ function isWinningHand(tiles) {
         });
 
         // 残りの牌が順子または刻子で構成されているか判定
-        if (checkMeld(remainingTiles)) {
-            // TODO: 役判定
-            return true;
-        }
+        meld = checkMeld(remainingTiles);
 
         // 大四喜、小四喜パターンの判定
         if (isSpecialHand1(tileCounts)) {
-            // tilesの最初の４つが東南西北か
-            if (tiles.slice(0, 4).every(tile => ['東', '南', '西', '北'].includes(tile.suit))) {
-                // Todo 大四喜
-            } else {
-                // Todo 小四喜
-            }
-            return true;
+            isSpecial1 = true;
         }
 
         // 大三元パターンの判定
         if (isSpecialHand2(tileCounts)) {
-            return true;
+            isSpecial2 = true;
         }
 
         // 三色同刻パターンの判定
         if (isSpecialHand3(tileCounts)) {
-            return true;
+            isSpecial3 = true;
         }
+    }
+
+    if (isTanki || !(meld === '和了不可能') || isSpecialHand1(tileCounts) || isSpecialHand2(tileCounts) || isSpecialHand3(tileCounts)) {
+        if (yakuJudge) {
+            // 役判定、得点計算のためのデータセットを作成
+            const handData = {
+                tiles: tiles, // ソート前の手牌全体
+                sortedTiles: sortedTiles, // ソート後の手牌全体
+                holaTile: tiles[tiles.length - 1], // 和了牌
+                pairTile: pairTile, // 対子の牌
+                doraTiles: doraTiles, // ドラ
+                isRiichi: isRiichi[playerId], // リーチか
+                isTsumo: getCurrentPlayerId() === playerId, // ツモか
+                prevailingWind: (PLAYER_IDS.indexOf(getCurrentPlayerId()) -
+                    dealerIndex + PLAYER_IDS.length) % PLAYER_IDS.length, // 自風(0: 東 1: 南, 2: 西, 3: 北)
+                isTanki: isTanki, // 鳴いた状態で単騎で和了か
+                meld: meld, // 通常和了の刻子か順子か和了不可能か
+                isSpecial1: isSpecial1, // 大四喜か小四喜パターンか
+                isSpecial2: isSpecial2, // 大三元パターンか
+                isSpecial3: isSpecial3, // 三色同刻パターンか
+                melds: melds[playerId], // 鳴き牌情報
+            };
+
+            // 役判定
+            const result = calculateYaku(handData);
+
+            // 役判定結果を返す
+            return {
+                isWinning: true,
+                yaku: result.yaku,
+                fans: result.fans,
+                yakumanList: result.yakuman,
+                yakumanPower: result.yakumanPower
+            };
+        } else {
+            // フリテン判定用（役計算不要）
+            return {
+                isWinning: true,
+                yaku: [],
+                fans: 0,
+                yakumanList: [],
+                yakumanCount: 0
+            };
+        }
+    } else {
+        return {
+            isWinning: false,
+            yaku: [],
+            fans: 0,
+            yakumanList: [],
+            yakumanCount: 0
+        };
     }
 }
 
 /**
  * 面子（順子または刻子）判定を行う
  * @param {object[]} tiles 牌オブジェクトの配列
- * @returns {boolean} 面子かどうか
+ * @returns {string} '刻子' か '順子' か '和了不可能'
  */
 function checkMeld(tiles) {
     // 刻子判定
     if (tiles.length >= 3 && tiles[0].suit === tiles[1].suit && tiles[1].suit === tiles[2].suit && tiles[0].number === tiles[1].number && tiles[1].number === tiles[2].number) {
-        return true;
+        return '刻子';
     }
 
     // 順子判定
@@ -1221,11 +1360,11 @@ function checkMeld(tiles) {
             tiles[i + 1].number === tiles[i].number + 1 && // i+1番目の牌がi番目の牌の次の数字であることを確認
             tiles[i + 2].number === tiles[i + 1].number + 1 // i+2番目の牌がi+1番目の牌の次の数字であることを確認
         ) {
-            return true;
+            return '順子';
         }
     }
 
-    return false; // 刻子も順子も作れない場合は和了不可能
+    return '和了不可能'; // 刻子も順子も作れない場合は和了不可能
 }
 
 /**
@@ -1409,6 +1548,221 @@ function checkKakan(playerId, tile) {
     return false;
 }
 
+// --- 役判定 ---
+
+/**
+ * 役判定を行う関数
+ * @param {object} handData 手牌のデータ
+ * @returns {object} 役のリストと合計翻数、役満のリスト
+ */
+function calculateYaku(handData) {
+    const yaku = [];
+    let fans = 0;
+    const yakuman = [];
+    let yakumanPower = 0;
+
+    // 役満判定
+    if (isTenho(handData)) {
+        yakuman.push(YAKUMAN.天和);
+        yakumanPower += YAKUMAN.天和.power;
+    }
+
+    if (isChiho(handData)) {
+        yakuman.push(YAKUMAN.地和);
+        yakumanPower += YAKUMAN.地和.power;
+    }
+
+    if (isRenho(handData)) {
+        yakuman.push(YAKUMAN.人和);
+        yakumanPower += YAKUMAN.人和.power;
+    }
+
+    if (isDaisangen(handData)) {
+        yakuman.push(YAKUMAN.大三元);
+        yakumanPower += YAKUMAN.大三元.power;
+    }
+
+    if (isTsuiisou(handData)) {
+        yakuman.push(YAKUMAN.字一色);
+        yakumanPower += YAKUMAN.字一色.power;
+    }
+
+    if (isRyuiisou(handData)) {
+        yakuman.push(YAKUMAN.緑一色);
+        yakumanPower += YAKUMAN.緑一色.power;
+    }
+
+    if (isChinroutou(handData)) {
+        yakuman.push(YAKUMAN.清老頭);
+        yakumanPower += YAKUMAN.清老頭.power;
+    }
+
+    if (isIikantsu(handData)) {
+        yakuman.push(YAKUMAN.一槓子);
+        yakumanPower += YAKUMAN.一槓子.power;
+    }
+
+    if (isShosushi(handData)) {
+        yakuman.push(YAKUMAN.小四喜);
+        yakumanPower += YAKUMAN.小四喜.power;
+    }
+
+    if (isDaisushi(handData)) {
+        yakuman.push(YAKUMAN.大四喜);
+        yakumanPower += YAKUMAN.大四喜.power;
+    }
+
+    if (isIiankantanki(handData)) {
+        yakuman.push(YAKUMAN.一暗槓単騎);
+        yakumanPower += YAKUMAN.一暗槓単騎.power;
+    }
+
+    // 役満でない場合、通常の役判定を行う
+    if (yakumanPower === 0) {
+        // TODO 通常の役判定のコードを追加 ...
+    }
+
+    return { yaku, fans, yakuman, yakumanPower };
+}
+
+/**
+ * 天和の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 天和かどうか
+ */
+function isTenho(handData) {
+    // 親であることと、第一ツモであることを確認
+    return PLAYER_IDS[dealerIndex] === getCurrentPlayerId() && remainingTilesCount === 119 && handData.isTsumo;
+}
+
+/**
+ * 地和の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 地和かどうか
+ */
+function isChiho(handData) {
+    const isAllMenzen = PLAYER_IDS.every(playerId => melds[playerId].length === 0);
+    // 親以外であること、第一ツモであること、全員が門前であることを確認
+    return PLAYER_IDS[dealerIndex] !== getCurrentPlayerId() &&
+        remainingTilesCount >= 116 && handData.isTsumo &&
+        isAllMenzen;
+}
+
+/**
+ * 人和の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 人和かどうか
+ */
+function isRenho(handData) {
+    // 第一ツモ前（＝牌を捨てていない）
+    const isNoDiscards = discardedTiles[playerId].length === 0;
+
+    const isAllMenzen = PLAYER_IDS.every(playerId => melds[playerId].length === 0);
+    // 子であることと、全員が門前であること、第一ツモ前のロンであることを確認
+    return PLAYER_IDS[dealerIndex] !== getCurrentPlayerId() && isAllMenzen && !handData.isTsumo && isNoDiscards;
+}
+
+/**
+ * 大三元の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 大三元かどうか
+ */
+function isDaisangen(handData) {
+    return handData.isSpecial2;
+}
+
+/**
+ * 字一色の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 字一色かどうか
+ */
+function isTsuiisou(handData) {
+    // 全ての牌が字牌かどうかを判定
+    return handData.sortedTiles.every(tile => !tile.number);
+}
+
+/**
+ * 緑一色の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 緑一色かどうか
+ */
+function isRyuiisou(handData) {
+    // 緑一色を構成する牌のリスト
+    const greenTiles = ['2索', '3索', '4索', '6索', '8索', '發'];
+
+    // 全ての牌が緑一色を構成する牌かどうかを判定
+    return handData.sortedTiles.every(tile => {
+        const tileString = tile.number ? `${tile.number}${tile.suit}` : tile.suit;
+        return greenTiles.includes(tileString);
+    });
+}
+
+/**
+ * 清老頭の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 清老頭かどうか
+ */
+function isChinroutou(handData) {
+    // 清老頭を構成する牌のリスト
+    const chinroutouTiles = ['1萬', '9萬', '1筒', '9筒', '1索', '9索'];
+
+    // 全ての牌が清老頭を構成する牌かどうかを判定
+    return handData.sortedTiles.every(tile => {
+        const tileString = tile.number ? `${tile.number}${tile.suit}` : tile.suit;
+        return chinroutouTiles.includes(tileString);
+    });
+}
+
+/**
+ * 一槓子の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 一槓子かどうか
+ */
+function isIikantsu(handData) {
+    // 鳴き牌情報の中に、カンが含まれているかどうかを判定
+    return handData.isTanki && melds[getCurrentPlayerId()].some(meld => meld.meldType.includes('kan'));
+}
+
+/**
+ * 小四喜の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 小四喜かどうか
+ */
+function isShosushi(handData) {
+    // tilesの最初の４つが東南西北ではないか
+    return handData.isSpecial1 && !(handData.tiles.slice(0, 4).every(tile => ['東', '南', '西', '北'].includes(tile.suit)));
+}
+
+/**
+ * 大四喜の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 大四喜かどうか
+ */
+function isDaisushi(handData) {
+    // tilesの最初の４つが東南西北か
+    return handData.isSpecial1 && handData.tiles.slice(0, 4).every(tile => ['東', '南', '西', '北'].includes(tile.suit));
+}
+
+/**
+ * 一暗槓単騎の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 一暗槓単騎かどうか
+ */
+function isIiankantanki(handData) {
+    // 鳴き牌情報の中に、暗カンが含まれているかどうかを判定
+    return handData.isTanki && melds[getCurrentPlayerId()].some(meld => meld.meldType.includes('ankan'));
+}
+
+/**
+ * 門前自摸和の判定を行う
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 門前自摸和かどうか
+ */
+function isMenzenTsumo(handData) {
+    // 鳴き牌がないことと、ツモであることを確認
+    return handData.melds.length === 0 && handData.isTsumo;
+}
+
 // --- その他の関数 ---
 
 function unlockAudio() {
@@ -1469,7 +1823,8 @@ function updateFuritenStatus(playerId) {
 
     // フリテン判定用の捨て牌に対してのみチェック
     for (const tile of discardedTiles[playerId]) {
-        if (tile && isWinningHand([...handTiles, tile])) {
+        const winningHandDataForFuriten = isWinningHand([...handTiles, tile], playerId, false);
+        if (tile && winningHandDataForFuriten.isWinning) {
             isRonPossibleInDiscarded = true;
             break;
         }
