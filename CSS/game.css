@@ -334,15 +334,57 @@ html {
     left: 26%;
 }
 
+/* リーチボタンのスタイル */
+#bottom-riichi-button,
+#left-riichi-button,
+#right-riichi-button,
+#top-riichi-button {
+    background-image: url('../Picture/riichi.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    cursor: pointer;
+    display: block;
+    width: 10%;
+    height: 10%;
+}
+
+#bottom-riichi-button {
+    position: absolute;
+    top: 83%;
+    left: 64.5%;
+}
+
+#left-riichi-button {
+    position: absolute;
+    top: 74%;
+    left: 16.8%;
+}
+
+#right-riichi-button {
+    position: absolute;
+    top: 13%;
+    left: 73.4%;
+}
+
+#top-riichi-button {
+    position: absolute;
+    top: 7.5%;
+    left: 26.5%;
+}
+
 /* 左側プレイヤーのボタン、点数、フリテン表示、鳴き牌は回転 */
 #left-tsumo-button,
 #left-ron-button,
 #left-kan-button,
 #left-skip-button,
 #left-pon-button,
+#left-riichi-button,
 #left-score,
 #left-furiten,
-#left-melds {
+#left-melds,
+#left-riichi-tenbou {
     transform: rotate(90deg);
 }
 
@@ -352,9 +394,11 @@ html {
 #right-kan-button,
 #right-skip-button,
 #right-pon-button,
+#right-riichi-button,
 #right-score,
 #right-furiten,
-#right-melds {
+#right-melds,
+#right-riichi-tenbou {
     transform: rotate(-90deg);
 }
 
@@ -364,9 +408,11 @@ html {
 #top-kan-button,
 #top-skip-button,
 #top-pon-button,
+#top-riichi-button,
 #top-score,
 #top-furiten,
-#top-melds {
+#top-melds,
+#top-riichi-tenbou {
     transform: rotate(180deg);
 }
 
@@ -437,6 +483,41 @@ html {
     left: 51.6%;
     width: 1.25%;
     height: auto;
+}
+
+/* リーチしたときに表示する千点棒 */
+#left-riichi-tenbou,
+#right-riichi-tenbou,
+#top-riichi-tenbou,
+#bottom-riichi-tenbou {
+    position: absolute;
+    background-image: url('../Picture/tenbou1000.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    width: 7.5%;
+    height: 7.5%;
+}
+
+#left-riichi-tenbou {
+    top: 46.1%;
+    left: 38.7%;
+}
+
+#bottom-riichi-tenbou {
+    top: 60.1%;
+    left: 46.5%;
+}
+
+#right-riichi-tenbou {
+    top: 46.1%;
+    left: 54.4%;
+}
+
+#top-riichi-tenbou {
+    top: 32.2%;
+    left: 46.5%;
 }
 
 /* ミュートボタンのスタイル */
@@ -622,4 +703,9 @@ html {
     display: block;
     width: 7%;
     height: 7%;
+}
+
+/* リーチしたときに捨てられない牌のスタイル */
+.disabled-tile img {
+    opacity: 80%;
 }
