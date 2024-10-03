@@ -89,11 +89,9 @@ html {
 
 .player-discarded {
     position: absolute;
-    display: grid;
-    grid-template-rows: repeat(4, 1fr);
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0px;
-    width: 18%;
+    display: flex;
+    flex-wrap: wrap;
+    width: 20%;
 
     /* 各プレイヤーの捨て牌エリアの位置を調整 */
     &#bottom-discarded {
@@ -102,19 +100,41 @@ html {
     }
 
     &#left-discarded {
-        top: -135%;
-        left: 31%;
+        top: -160%;
+        left: 30.5%;
     }
 
     &#right-discarded {
-        top: -135%;
-        right: 51%;
+        top: -150%;
+        right: 49.5%;
     }
 
     &#top-discarded {
         top: -295%;
-        left: 31%;
+        left: 30%;
     }
+}
+
+/* 捨て牌を4行7列に配置 */
+.player-discarded .discarded-tile {
+    width: calc(100% / 7.5);
+}
+
+/* 捨て牌を4行7列に配置 */
+.player-discarded .discarded-tile:nth-child(n + 1):nth-child(-n + 7) {
+    /* 1行目 */
+}
+
+.player-discarded .discarded-tile:nth-child(n + 8):nth-child(-n + 14) {
+    /* 2行目 */
+}
+
+.player-discarded .discarded-tile:nth-child(n + 15):nth-child(-n + 21) {
+    /* 3行目 */
+}
+
+.player-discarded .discarded-tile:nth-child(n + 22):nth-child(-n + 28) {
+    /* 4行目 */
 }
 
 /* ツモ牌の左側に隙間を追加 */
@@ -708,4 +728,12 @@ html {
 /* リーチしたときに捨てられない牌のスタイル */
 .disabled-tile img {
     opacity: 80%;
+}
+
+/* リーチしたときに横向きにする牌のスタイル*/
+.riichi-first-discard {
+    transform: rotate(90deg);
+    margin-top: 1px;
+    margin-left: 3px;
+    margin-right: 6px;
 }

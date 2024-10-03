@@ -346,7 +346,17 @@ function initializeTiles() {
             for (let j = 0; j < 4; j++) {
                 //allTiles.push(i + suit);
                 //TODO テスト用 
-                allTiles.push('3萬');
+                switch (i) {
+                    case 1: allTiles.push('東'); break;
+                    case 2: allTiles.push('南'); break;
+                    case 3: allTiles.push('西'); break;
+                    case 4: allTiles.push('北'); break;
+                    case 5: allTiles.push('東'); break;
+                    case 6: allTiles.push('南'); break;
+                    case 7: allTiles.push('西'); break;
+                    case 8: allTiles.push('北'); break;
+                    case 9: allTiles.push('東'); break;
+                }
             }
         }
     });
@@ -687,7 +697,7 @@ async function startTurn(playerId) {
 function endTurn() {
     if (!isRonDeclared) {
         // ターン終了時にフリテン状態を更新
-        updateFuritenStatus(getCurrentPlayerId());
+        updateFuritenStatus(getCurrentPlayerId()); //TODOフリテン継続バグ
 
         currentPlayerIndex = (currentPlayerIndex + 1) % PLAYER_IDS.length;
         startTurn(getCurrentPlayerId());
@@ -725,7 +735,6 @@ function handleTileClick(playerId, tile, tileElement) {
                 console.log("テンパイを維持できないため捨てられません。");
                 return;
             }
-            isRiichiFirstTurn = false;
         }
 
         removeTileFromHand(playerId, tileElement);
@@ -760,6 +769,13 @@ async function handleDiscardAction(playerId, discardedTile) {
     tiles.forEach(tileElement => {
         tileElement.classList.remove('disabled-tile');
     });
+
+    // リーチ宣言後 かつ 捨て牌エリアに横向きの牌がない場合
+    if (isRiichi[playerId] && !playerDiscardedElements[playerId].querySelector('.riichi-first-discard')) {
+        // 次に捨てられる牌にクラスを追加して横向きにする
+        const nextDiscardedTile = playerDiscardedElements[playerId].lastElementChild;
+        nextDiscardedTile.classList.add('riichi-first-discard');
+    }
 
     // 現在のプレイヤーのインデックスを取得
     const currentPlayerIndex = PLAYER_IDS.indexOf(playerId);
@@ -866,6 +882,7 @@ async function handleDiscardAction(playerId, discardedTile) {
     if (isRonSkip || isAllNotDeclaration || Object.values(skipFlags).includes(true)) {
         endTurn();
     }
+    isRiichiFirstTurn = false;
     isAllNotDeclaration = true;
 }
 
@@ -1235,14 +1252,17 @@ function removeTileFromDiscarded(playerId, tile) {
     const playerDiscardedElement = playerDiscardedElements[playerId];
     // playerDiscardedElement.children を配列に変換
     const discardedTiles = Array.from(playerDiscardedElement.children);
+
+    // 削除対象の牌が見つかったらループを抜けるフラグ
+    let tileRemoved = false;
+
     discardedTiles.forEach(tileElement => {
         // 牌の種類を表す文字列を取得
         const tileText = tileElement.querySelector('img').alt;
 
-        if (tileText === tile) {
+        if (!tileRemoved && tileText === tile) {
             playerDiscardedElement.removeChild(tileElement);
-            // 1枚削除したらループを抜ける
-            return;
+            tileRemoved = true; // 削除フラグを立てる
         }
     });
 }
@@ -1277,7 +1297,7 @@ function removeTilesFromHand(playerId, tile, count) {
  */
 function checkTsumo(playerId) {
     const handTiles = getHandTiles(playerId);
-    winningHandData = isWinningHand(handTiles, playerId, true);
+    winningHandData = isWinningHand(handTiles, playerId, playerId, true);
     if (winningHandData.isWinning) {
         isExecuteTsumoWaiting = true;
 
@@ -1306,7 +1326,7 @@ function checkRon(playerId, discardPlayerId) {
     const lastDiscardedTile = discardedTiles[discardPlayerId][discardedTiles[discardPlayerId].length - 1];
 
     if (lastDiscardedTile) {
-        winningHandData = isWinningHand([...handTiles, lastDiscardedTile], discardPlayerId, true);
+        winningHandData = isWinningHand([...handTiles, lastDiscardedTile], discardPlayerId, playerId, true);
         return winningHandData.isWinning; // isWinningプロパティの値を返す
     }
 
@@ -1316,11 +1336,12 @@ function checkRon(playerId, discardPlayerId) {
 /**
  * 和了判定を行う
  * @param {string[]} tiles 牌の文字列配列
- * @param {string} playerId ツモの場合は自分、ロンの場合は牌を捨てたプレイヤー
+ * @param {string} discardPlayerId ロンの場合は牌を捨てたプレイヤー、ツモの場合は自分
+ * @param {string} playerId ロンしたプレイヤー、ツモの場合は自分
  * @param {boolean} yakuJudge 役判定を実施するか
  * @returns {object} 和了判定結果、役のリストと合計翻数、または役満のリストと合計役満数
  */
-function isWinningHand(tiles, playerId, yakuJudge) {
+function isWinningHand(tiles, discardPlayerId, playerId, yakuJudge) {
     let isTanki = false;
     let meld = false;
     let isSpecial1 = false;
@@ -1438,8 +1459,8 @@ function isWinningHand(tiles, playerId, yakuJudge) {
                 remainingTiles: remainingTiles, // 頭以外の牌
                 doraTiles: doraTiles, // ドラ
                 isRiichiHola: isRiichi[playerId], // リーチか
-                isTsumo: getCurrentPlayerId() === playerId, // ツモか
-                prevailingWind: (PLAYER_IDS.indexOf(getCurrentPlayerId()) -
+                isTsumo: playerId === discardPlayerId, // ツモか
+                prevailingWind: (PLAYER_IDS.indexOf(playerId) -
                     dealerIndex + PLAYER_IDS.length) % PLAYER_IDS.length, // 自風(0: 東 1: 南, 2: 西, 3: 北)
                 isTanki: isTanki, // 鳴いた状態で単騎で和了か
                 holaMeld: meld, // 通常和了の刻子か順子か和了不可能か
@@ -1759,17 +1780,17 @@ function calculateYaku(handData) {
 
     // 役満でない場合、通常の役判定を行う
     if (yakumanPower === 0) {
-        if (isRiichiHola(handData)) {
+        if (isRiichiHola(handData)) {//ok
             yaku.push(YAKU.立直);
             fans += YAKU.立直.fans;
         }
 
-        if (isMenzenTsumo(handData)) {
+        if (isMenzenTsumo(handData)) {//ok
             yaku.push(YAKU.門前清自摸和);
             fans += YAKU.門前清自摸和.fans;
         }
 
-        if (isTanyao(handData)) {
+        if (isTanyao(handData)) { //ok
             yaku.push(YAKU.断么九);
             fans += YAKU.断么九.fans;
         }
@@ -1824,7 +1845,7 @@ function calculateYaku(handData) {
             fans += YAKU.ダブル立直.fans;
         }
 
-        if (isSanshokudoukou(handData)) {
+        if (isSanshokudoukou(handData)) {//ok
             yaku.push(YAKU.三色同刻);
             fans += YAKU.三色同刻.fans;
         }
@@ -1905,7 +1926,7 @@ function isTenho(handData) {
  */
 function isChiho(handData) {
     const isAllMenzen = PLAYER_IDS.every(playerId => melds[playerId].length === 0);
-    // 親以外であること、第一ツモであること、全員が門前であることを確認
+    // 親以外であること、一巡目のツモであること、全員が門前であることを確認
     return PLAYER_IDS[dealerIndex] !== getCurrentPlayerId() &&
         remainingTilesCount >= 102 && handData.isTsumo &&
         isAllMenzen;
@@ -1917,14 +1938,22 @@ function isChiho(handData) {
  * @returns {boolean} 人和かどうか
  */
 function isRenho(handData) {
-    // 第一ツモ前
-    const isRonBeforeFirstTsumo = (handData.prevailingWind === 1 && remainingTilesCount === 104) ||
-        (handData.prevailingWind === 2 && remainingTilesCount === 103) ||
-        (handData.prevailingWind === 3 && remainingTilesCount === 102);
-
     const isAllMenzen = PLAYER_IDS.every(playerId => melds[playerId].length === 0);
-    // 子であることと、全員が門前であること、第一ツモ前のロンであることを確認
-    return PLAYER_IDS[dealerIndex] !== getCurrentPlayerId() && isAllMenzen && !handData.isTsumo && isRonBeforeFirstTsumo;
+
+    // 一巡目以内
+    let isRonBeforeFirstTsumo = false;
+    switch (handData.prevailingWind) {
+        case 0: isRonBeforeFirstTsumo = false;
+            break;
+        case 1: isRonBeforeFirstTsumo = remainingTilesCount === 105;
+            break;
+        case 2: isRonBeforeFirstTsumo = remainingTilesCount >= 104;
+            break;
+        case 3: isRonBeforeFirstTsumo = remainingTilesCount >= 103;
+    }
+
+    // 全員が門前であること、一巡目の最初のツモ前のロンであることを確認
+    return isAllMenzen && !handData.isTsumo && isRonBeforeFirstTsumo;
 }
 
 /**
@@ -1942,8 +1971,16 @@ function isDaisangen(handData) {
  * @returns {boolean} 字一色かどうか
  */
 function isTsuiisou(handData) {
-    // 全ての牌が字牌かどうかを判定
-    return handData.sortedTiles.every(tile => !tile.number);
+    // 手牌が字牌かどうかを判定
+    const isHandAllJihai = handData.sortedTiles.every(tile => HONOR_TYPES.includes(tile.suit));
+
+    // 鳴き牌が字牌かどうかを判定
+    const isMeldsAllJihai = handData.melds.every(meld => {
+        return meld.tiles.every(tile => HONOR_TYPES.includes(tile.slice(-1))); // 牌の最後の文字で判定
+    });
+
+    // 手牌と鳴き牌の両方がすべて字牌の場合にtrueを返す
+    return isHandAllJihai && isMeldsAllJihai;
 }
 
 /**
@@ -1955,11 +1992,19 @@ function isRyuiisou(handData) {
     // 緑一色を構成する牌のリスト
     const greenTiles = ['2索', '3索', '4索', '6索', '8索', '發'];
 
-    // 全ての牌が緑一色を構成する牌かどうかを判定
-    return handData.sortedTiles.every(tile => {
+    // 手牌が緑一色かどうかを判定
+    const isHandAllGreen = handData.sortedTiles.every(tile => {
         const tileString = tile.number ? `${tile.number}${tile.suit}` : tile.suit;
         return greenTiles.includes(tileString);
     });
+
+    // 鳴き牌が緑一色かどうかを判定
+    const isMeldsAllGreen = handData.melds.every(meld => {
+        return meld.tiles.every(tile => greenTiles.includes(tile));
+    });
+
+    // 手牌と鳴き牌の両方がすべて緑一色の場合にtrueを返す
+    return isHandAllGreen && isMeldsAllGreen;
 }
 
 /**
@@ -1971,11 +2016,19 @@ function isChinroutou(handData) {
     // 清老頭を構成する牌のリスト
     const chinroutouTiles = ['1萬', '9萬', '1筒', '9筒', '1索', '9索'];
 
-    // 全ての牌が清老頭を構成する牌かどうかを判定
-    return handData.sortedTiles.every(tile => {
+    // 手牌が清老頭かどうかを判定
+    const isHandAll19 = handData.sortedTiles.every(tile => {
         const tileString = tile.number ? `${tile.number}${tile.suit}` : tile.suit;
         return chinroutouTiles.includes(tileString);
     });
+
+    // 鳴き牌が清老頭かどうかを判定
+    const isMeldsAll19 = handData.melds.every(meld => {
+        return meld.tiles.every(tile => chinroutouTiles.includes(tile));
+    });
+
+    // 手牌と鳴き牌の両方がすべて清老頭の場合にtrueを返す
+    return isHandAll19 && isMeldsAll19;
 }
 
 /**
@@ -1985,7 +2038,7 @@ function isChinroutou(handData) {
  */
 function isIikantsu(handData) {
     // 鳴き牌情報の中に、カンが含まれているかどうかを判定
-    return handData.isTanki && melds[getCurrentPlayerId()].some(meld => meld.meldType.includes('kan'));
+    return handData.isTanki && handData.melds.some(meld => meld.meldType.includes('kan'));
 }
 
 /**
@@ -1994,8 +2047,16 @@ function isIikantsu(handData) {
  * @returns {boolean} 小四喜かどうか
  */
 function isShosushi(handData) {
-    // tilesの最初の４つが東南西北ではないか
-    return handData.isSpecial1 && !(handData.tiles.slice(0, 4).every(tile => ['東', '南', '西', '北'].includes(tile.suit)));
+    const windCounts = { '東': 0, '南': 0, '西': 0, '北': 0 };
+    for (let i = 0; i < 4; i++) {
+        const tile = handData.tiles[i];
+        if (['東', '南', '西', '北'].includes(tile)) {
+            windCounts[tile]++;
+        }
+    }
+    const is4Menchan = Object.values(windCounts).every(count => count === 1);
+    // 東南西北の四面待ちではないか
+    return handData.isSpecial1 && !is4Menchan;
 }
 
 /**
@@ -2004,8 +2065,16 @@ function isShosushi(handData) {
  * @returns {boolean} 大四喜かどうか
  */
 function isDaisushi(handData) {
-    // tilesの最初の４つが東南西北か
-    return handData.isSpecial1 && handData.tiles.slice(0, 4).every(tile => ['東', '南', '西', '北'].includes(tile.suit));
+    const windCounts = { '東': 0, '南': 0, '西': 0, '北': 0 };
+    for (let i = 0; i < 4; i++) {
+        const tile = handData.tiles[i];
+        if (['東', '南', '西', '北'].includes(tile)) {
+            windCounts[tile]++;
+        }
+    }
+    const is4Menchan = Object.values(windCounts).every(count => count === 1);
+    // 東南西北の四面待ちか
+    return handData.isSpecial1 && is4Menchan;
 }
 
 /**
@@ -2076,6 +2145,11 @@ function isTanyao(handData) {
 function isPinfu(handData) {
     // 鳴いていたら平和ではない
     if (handData.melds.length > 0) {
+        return false;
+    }
+
+    // 和了牌が頭だったら平和ではない
+    if (normalizeTileString(handData.holaTile) === handData.pairTile) {
         return false;
     }
 
@@ -2250,7 +2324,7 @@ function isDoubleriichi(handData) {
  * @returns {boolean} 三色同刻かどうか
  */
 function isSanshokudoukou(handData) {
-    return false;
+    return handData.isSpecial3;
 }
 
 /**
@@ -2350,7 +2424,7 @@ function isTenpai(tiles) {
         // 仮想的な手牌を作成 (待ち牌を追加)
         const virtualHand = [...tiles, waitingTile];
         // 和了判定
-        if (isWinningHand(virtualHand, null, false).isWinning) {
+        if (isWinningHand(virtualHand, null, null, false).isWinning) {
             waitingTiles.push(waitingTile);
         }
     });
@@ -2359,6 +2433,19 @@ function isTenpai(tiles) {
 }
 
 // --- その他の関数 ---
+
+/**
+ * 牌の文字列表現を統一する (例: "6索" -> "索6", "北" -> "北")
+ * @param {string} tile 牌の文字列
+ * @returns {string} 統一された牌の文字列
+ */
+function normalizeTileString(tile) {
+    if (tile.length === 1) {
+        return tile; // 字牌はそのまま返す
+    } else {
+        return tile[1] + tile[0]; // 数牌は種類を先頭に
+    }
+}
 
 // 音声を再生する関数
 function playSound(sound) {
@@ -2404,7 +2491,7 @@ function updateFuritenStatus(playerId) {
 
     // フリテン判定用の捨て牌に対してのみチェック
     for (const tile of discardedTiles[playerId]) {
-        const winningHandDataForFuriten = isWinningHand([...handTiles, tile], playerId, false);
+        const winningHandDataForFuriten = isWinningHand([...handTiles, tile], playerId, playerId, false);
         if (tile && winningHandDataForFuriten.isWinning) {
             isRonPossibleInDiscarded = true;
             break;
