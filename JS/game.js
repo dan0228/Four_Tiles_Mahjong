@@ -810,7 +810,7 @@ async function handleDiscardAction(playerId, discardedTile) {
             showSkipButtons(otherPlayerId);
 
             // ロンボタンのイベントリスナーを設定
-            setupRonButtonListener(otherPlayerId);
+            setupRonButtonListener(otherPlayerId, playerId);
         }
 
         if (isRonPossible) {
@@ -896,10 +896,11 @@ async function handleDiscardAction(playerId, discardedTile) {
 
 /**
  * ロンボタンのイベントリスナーを設定する
- * @param {string} playerId プレイヤーID
+ * @param {string} ronPlayerId ロンしたプレイヤーID
+ * @param {string} ronTargetPlayerId ロンされたプレイヤーID
  */
-function setupRonButtonListener(playerId) {
-    ronButtons[playerId].onclick = () => {
+function setupRonButtonListener(ronPlayerId, ronTargetPlayerId) {
+    ronButtons[ronPlayerId].onclick = () => {
         // ロン宣言済み
         isRonDeclared = true;
 
@@ -911,7 +912,7 @@ function setupRonButtonListener(playerId) {
         hideAllSkipButtons();
 
         // ロン処理の実装
-        handleRon(playerId);
+        handleRon(ronPlayerId, ronTargetPlayerId);
     };
 }
 
@@ -1010,20 +1011,23 @@ function setupKanButtonListener(playerId, targetPlayerId, tile) {
 
 /**
  * ロン処理を行う
- * @param {string} playerId ロンを宣言したプレイヤーID
+ * @param {string} ronPlayerId ロンを宣言したプレイヤーID
+ * @param {string} ronTargetPlayerId ロンされたプレイヤーID
  */
-function handleRon(playerId) {
-    console.log(`${playerId} がロンしました！`);
+function handleRon(ronPlayerId, ronTargetPlayerId) {
+    console.log(`${ronPlayerId} がロンしました！`);
 
     // 役判定結果を表示
     console.log("役判定結果:", winningHandData);
 
     // ... (winningHandData を利用した処理) ...
+    // 点数の移動を行う
+    handlePointTransfer(ronPlayerId, ronTargetPlayerId);
 
     // proceedToNextRound() の完了後に isRoundEnding を false に戻す
     if (!isRoundEnding) {
         // 親がロンした場合、親は変わらず次の局へは進まない
-        if (playerId === PLAYER_IDS[dealerIndex]) {
+        if (ronPlayerId === PLAYER_IDS[dealerIndex]) {
             console.log("親がロンしたため、局は継続です。");
             isDealerHola = true;
         }
@@ -1067,6 +1071,8 @@ function handleTsumo(playerId) {
     console.log("役判定結果:", winningHandData);
 
     // ... (winningHandData を利用した処理) ...
+    // 点数の移動を行う
+    handlePointTransfer(playerId, playerId);
 
     // proceedToNextRound() の完了後に isRoundEnding を false に戻す
     if (!isRoundEnding) {
@@ -1262,7 +1268,7 @@ async function handleKan(playerId, targetPlayerId, tile) {
                 showSkipButtons(otherPlayerId);
 
                 // ロンボタンのイベントリスナーを設定
-                setupRonButtonListener(otherPlayerId);
+                setupRonButtonListener(otherPlayerId, playerId);
             }
 
             if (isRonPossible) {
@@ -1509,7 +1515,7 @@ function isWinningHand(tiles, discardPlayerId, playerId, yakuJudge) {
 
     if (isTanki || !(meld === '和了不可能') || isSpecialHand1(tileCounts) || isSpecialHand2(tileCounts) || isSpecialHand3(tileCounts)) {
         if (yakuJudge) {
-            // 役判定、得点計算のためのデータセットを作成
+            // 役判定のためのデータセットを作成
             const handData = {
                 tiles: tiles, // ソート前の手牌全体
                 sortedTiles: sortedTiles, // ソート後の手牌全体
@@ -2682,6 +2688,9 @@ function drawTile(playerId) {
         // 残り牌数の表示を更新
         if (remainingTilesCount < 0) { //TODO テスト用
             console.log("流局です。次の局に進みます。");
+            // 点数の移動を行う
+            handlePointTransfer(null, null);
+
             proceedToNextRound();
         } else {
             updateRemainingTilesDisplay();
@@ -2930,6 +2939,9 @@ function getHandTiles(playerId) {
     return Array.from(playerHandElement.querySelectorAll('img')).map(imgElement => imgElement.alt);
 }
 
+/**
+ * 画面比率を調整する
+ */
 function resizeAppContainer() {
     const appContainer = document.getElementById('app-container');
     const windowWidth = window.innerWidth;
@@ -2950,6 +2962,132 @@ function resizeAppContainer() {
         appContainer.style.left = '0px';
         appContainer.style.top = (windowHeight - targetHeight) / 2 + 'px'; // 中央寄せ
     }
+}
+
+/**
+ * 点数の移動を行う
+ * @param {string} holaPlayerId 和了したプレイヤーID(nullの場合は流局)
+ * @param {string} ronTargetPlayerId ロンされたプレイヤーID(ツモの場合はholaPlayerIdと同じ、nullの場合は流局)
+ */
+function handlePointTransfer(holaPlayerId, ronTargetPlayerId) {
+    // 親子の判定
+    const isDealerHola = holaPlayerId === PLAYER_IDS[dealerIndex];
+
+    // 点数の定義
+    const notenPenalty = 3000; // ノーテン罰符
+    let manganPoints = 8000;
+    if (isDealerHola) {
+        manganPoints = 12000;
+    }
+    const hanemanPoints = manganPoints * 1.5;
+    const baimanPoints = manganPoints * 2;
+    const sanBaimanPoints = manganPoints * 3;
+    const yakumanPoints = manganPoints * 4;
+
+    // 流局の場合
+    let tenpaiStatus = {}; // 'left', 'bottom', 'right', 'top'のテンパイ状態;
+    if (holaPlayerId === null) {
+        for (const playerId of PLAYER_IDS) {
+            const handTiles = getHandTiles(playerId);
+            tenpaiStatus[playerId] = isTenpai(handTiles).length > 0; // テンパイかどうかを判定
+
+        }
+        // テンパイ人数によって罰符を決定
+        let tenpaiCount = 0;
+        for (const playerId in tenpaiStatus) {
+            if (tenpaiStatus[playerId]) {
+                tenpaiCount++;
+            }
+        }
+        // ノーテン罰符の移動
+        switch (tenpaiCount) {
+            case 0: // 全員ノーテンの場合
+                // 点数移動なし
+                break;
+            case 1: // テンパイ者が1人の場合
+                for (const playerId in tenpaiStatus) {
+                    if (tenpaiStatus[playerId]) {
+                        // テンパイ者には他のプレイヤーから1000点ずつ
+                        PLAYER_IDS.forEach(otherPlayerId => {
+                            if (otherPlayerId !== playerId) {
+                                playerScores[playerId] += notenPenalty / 3;
+                                playerScores[otherPlayerId] -= notenPenalty / 3;
+                            }
+                        });
+                        break;
+                    }
+                }
+                break;
+            case 2: // テンパイ者が2人の場合
+            case 3: // テンパイ者が3人の場合
+                for (const playerId in tenpaiStatus) {
+                    if (!tenpaiStatus[playerId]) {
+                        // ノーテン者にはテンパイ者それぞれに1000点ずつ
+                        PLAYER_IDS.forEach(otherPlayerId => {
+                            if (otherPlayerId !== playerId && tenpaiStatus[otherPlayerId]) {
+                                playerScores[playerId] -= notenPenalty / (4 - tenpaiCount);
+                                playerScores[otherPlayerId] += notenPenalty / (4 - tenpaiCount);
+                            }
+                        });
+                    }
+                }
+                break;
+        }
+    }
+
+    // 和了計算の準備
+    const isYakuman = winningHandData.yakumanPower > 0;
+
+    // 点数計算
+    let point = 0;
+    if (isYakuman) {
+        point = yakumanPoints * winningHandData.yakumanPower; // 役満の場合
+    } else if (winningHandData.fans >= 13) {
+        point = yakumanPoints; // 13翻以上は役満扱い
+    } else if (winningHandData.fans >= 11) {
+        point = sanBaimanPoints; // 三倍満
+    } else if (winningHandData.fans >= 8) {
+        point = baimanPoints; // 倍満
+    } else if (winningHandData.fans >= 6) {
+        point = hanemanPoints; // 跳満
+    } else if (winningHandData.fans >= 4) {
+        point = manganPoints; // 満貫
+    } else {
+        point = 0; // 3翻以下は0点
+    }
+
+    // ツモの場合
+    if (holaPlayerId === ronTargetPlayerId) {
+        // 親の場合
+        if (isDealerHola) {
+            PLAYER_IDS.forEach(playerId => {
+                if (playerId !== holaPlayerId) {
+                    playerScores[playerId] -= point / 3;
+                    playerScores[holaPlayerId] += point / 3;
+                }
+            });
+        } else { //子の場合
+            PLAYER_IDS.forEach(playerId => {
+                if (playerId !== holaPlayerId) {
+                    if (playerId === PLAYER_IDS[dealerIndex]) {
+                        playerScores[playerId] -= point / 4 * 2;
+                    } else {
+                        playerScores[playerId] -= point / 4;
+                    }
+                    playerScores[holaPlayerId] += point / 4;
+                }
+            });
+        }
+    } else { // ロンの場合
+        playerScores[ronTargetPlayerId] -= point;
+        playerScores[holaPlayerId] += point;
+    }
+
+    // 供託の移動
+    playerScores[holaPlayerId] += riichiDeposit * 1000;
+
+    // 点数表示を更新
+    updatePlayerScoresDisplay();
 }
 
 // --- イベントリスナー ---
