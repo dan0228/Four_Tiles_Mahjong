@@ -45,12 +45,16 @@ let discardedTiles = {}; // プレイヤーIDをキーに、捨てられた牌�
 let playerMeldElements = {}; // ポン、カンを表示する要素
 let wallTiles = []; // 王牌
 let doraTiles = []; // ドラ
+let uraDoraTiles = []; // 裏ドラ
+let doraDisplayedTiles = []; // ドラ表示牌
 let doraTileNumber = 1; // ドラ表示数
 let holaTiles = []; // 和了牌
 let holaMeldsTiles = []; // 和了鳴き牌
 
 // 役の定義と翻数
-const YAKU = {
+const doraFans = { fans: 0 };
+const uraDoraFans = { fans: 0 };
+let YAKU = {
     立直: { name: "立直", fans: 1 },
     門前清自摸和: { name: "門前清自摸和", fans: 1 },
     断么九: { name: "断么九", fans: 1 },
@@ -70,7 +74,9 @@ const YAKU = {
     混全帯么九: { name: "混全帯么九", fans: 2 },
     純全帯么九: { name: "純全帯么九", fans: 3 },
     混一色: { name: "混一色", fans: 3 },
-    清一色: { name: "清一色", fans: 3 } // 清一色の難易度が低いため翻数を混一色と同じにする
+    清一色: { name: "清一色", fans: 3 }, // 清一色の難易度が低いため翻数を混一色と同じにする
+    ドラ: { name: "ドラ", fans: doraFans },
+    裏ドラ: { name: "裏ドラ", fans: uraDoraFans }
 };
 
 // 役満の定義と役満数
@@ -308,6 +314,10 @@ function initializeGame() {
     displayWallTiles();
 
     // ドラ表示牌を設定
+    doraFans.fans = 0;
+    uraDoraFans.fans = 0;
+    doraTileNumber = 1;
+    doraDisplayedTiles = [];
     displayDoraTile(doraTileNumber);
 
     // 残り牌数を初期化
@@ -468,10 +478,15 @@ function displayDoraTile(doraTileNumber) {
     const doraTileElement = document.getElementById('dora-tiles');
     doraTileElement.innerHTML = ''; // 既存の牌をクリア
     doraTiles = [];
+    uraDoraTiles = [];
 
     // ドラ表示牌の数を考慮して表示
     for (let i = 0; i < doraTileNumber; i++) {
         const tile = wallTiles[i];
+        if (doraDisplayedTiles.length !== doraTileNumber && doraTileNumber > 0) {
+            doraDisplayedTiles = [];
+            doraDisplayedTiles.push(tile);
+        }
         const imgElement = document.createElement('img');
         const suit = tile.slice(-1);
         const number = SUIT_TYPES.includes(suit) ? tile.slice(0, -1) : null;
@@ -608,7 +623,10 @@ async function proceedToNextRound() {
     displayWallTiles();
 
     // ドラ表示牌を設定
+    doraFans.fans = 0;
+    uraDoraFans.fans = 0;
     doraTileNumber = 1;
+    doraDisplayedTiles = [];
     displayDoraTile(doraTileNumber);
 
     // 残り牌数を初期化
@@ -1979,6 +1997,16 @@ function calculateYaku(handData) {
                 fans -= 1;
             }
         }
+
+        if (isDora(handData)) {
+            yaku.push(YAKU.ドラ);
+            fans += YAKU.ドラ.fans.fans;
+        }
+
+        if (isUraDora(handData)) {
+            yaku.push(YAKU.裏ドラ);
+            fans += YAKU.裏ドラ.fans.fans;
+        }
     }
 
     return { yaku, fans, yakuman, yakumanPower };
@@ -2578,6 +2606,75 @@ function isChinitsu(handData) {
 }
 
 /**
+ * ドラの判定処理
+ * @param {object} handData 手牌情報
+ * @returns {boolean} ドラが1枚以上あるか
+ */
+function isDora(handData) {
+    let doraCount = 0;
+    let handTiles = [];
+    handData.sortedTiles.forEach(tile => {
+        // 字牌の場合、数字を含めない
+        handTiles.push(tile.number !== null ? `${tile.number}${tile.suit}` : `${tile.suit}`);
+    });
+    // ドラ牌の数だけループ
+    doraTiles.forEach(doraTile => {
+        // 手牌にドラ牌があればカウントを増やす
+        doraCount += handTiles.filter(handTile => handTile === doraTile).length;
+    });
+
+    doraFans.fans = doraCount; // ドラの枚数でdoraFansを更新
+    return doraCount > 0; // ドラが1枚以上あればTrueを返す
+}
+
+/**
+ * 裏ドラの判定処理
+ * @param {object} handData 手牌情報
+ * @returns {boolean} 裏ドラが1枚以上あるか
+ */
+function isUraDora(handData) {
+    // リーチしていなければ裏ドラ不要
+    if (!handData.isRiichiHola) {
+        return false;
+    }
+
+    let doraCount = 0;
+    let handTiles = [];
+    handData.sortedTiles.forEach(tile => {
+        // 字牌の場合、数字を含めない
+        handTiles.push(tile.number !== null ? `${tile.number}${tile.suit}` : `${tile.suit}`);
+    });
+
+    // 表ドラ表示牌を除いた王牌の配列を作成
+    const remainingWallTiles = [...wallTiles];
+    doraDisplayedTiles.forEach(doraDisplayedTile => {
+        const index = remainingWallTiles.indexOf(doraDisplayedTile);
+        if (index > -1) {
+            remainingWallTiles.splice(index, 1);
+        }
+    });
+
+    // 裏ドラの数を考慮して牌を抽出
+    for (let i = 0; i < doraTiles.length; i++) {
+        // 牌をランダムに選択
+        const randomIndex = Math.floor(Math.random() * remainingWallTiles.length);
+        const uraDoraTile = remainingWallTiles.splice(randomIndex, 1)[0];
+
+        // 裏ドラに追加
+        uraDoraTiles.push(uraDoraTile);
+    }
+
+    // ドラ牌の数だけループ
+    uraDoraTiles.forEach(doraTile => {
+        // 手牌にドラ牌があればカウントを増やす
+        doraCount += handTiles.filter(handTile => handTile === doraTile).length;
+    });
+
+    uraDoraFans.fans = doraCount; // 裏ドラの枚数でuraDoraFansを更新
+    return doraCount > 0; // 裏ドラが1枚以上あればTrueを返す
+}
+
+/**
  * テンパイ判定を行う
  * @param {string[]} tiles 牌の文字列配列 (4枚)
  * @returns {string[]} テンパイが成立する場合、待ち牌の配列。そうでない場合は空配列。
@@ -3110,9 +3207,9 @@ function handlePointTransfer(holaPlayerId, ronTargetPlayerId) {
                     } else {
                         playerScores[playerId] -= point / 4;
                     }
-                    playerScores[holaPlayerId] += point / 4;
                 }
             });
+            playerScores[holaPlayerId] += point;
         }
     } else { // ロンの場合
         playerScores[ronTargetPlayerId] -= point;
@@ -3311,7 +3408,11 @@ function showRoundResult(scoreChanges, playerId) {
         if (winningHandData.yaku.length > 0) {
             yakuHtml = '<div class="yaku-list">';
             winningHandData.yaku.forEach(yaku => {
-                yakuHtml += `<p>${yaku.name}（${yaku.fans}翻）</p>`;
+                if (yaku.name === 'ドラ' || yaku.name === '裏ドラ') {
+                    yakuHtml += `<p>${yaku.name}（${yaku.fans.fans}翻）</p>`;
+                } else {
+                    yakuHtml += `<p>${yaku.name}（${yaku.fans}翻）</p>`;
+                }
             });
             yakuHtml += `<p style="font-weight: bold; font-size: larger; color: red;">${winningHandData.fans}翻 ${yakuRank}</p>`;
         } else {
