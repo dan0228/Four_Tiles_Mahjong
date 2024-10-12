@@ -758,28 +758,35 @@ function endTurn() {
  */
 function handleTileClick(playerId, tile, tileElement) {
     // リーチ中は牌をクリックできないようにする
-    if (isRiichi[playerId] && !isRiichiFirstTurn[playerId]) {
+    if (isRiichi[playerId] && !isRiichiFirstTurn[playerId] && !isExecuteTsumoWaiting) {
         return;
     }
 
     if (canDiscard(playerId)) {
         // リーチしている場合、捨てられる牌を制限する
         if (isRiichi[playerId]) {
-            // 各牌を抜いた時の待ち牌を格納する配列
-            let tenpaiForm = [];
-            const handTiles = getHandTiles(playerId);
+            if (isRiichiFirstTurn[playerId]) {
+                // 各牌を抜いた時の待ち牌を格納する配列
+                let tenpaiForm = [];
+                const handTiles = getHandTiles(playerId);
 
-            for (let i = 0; i < handTiles.length; i++) {
-                const remainingTiles = handTiles.filter((_, index) => index !== i);
-                tenpaiForm.push(isTenpai(remainingTiles));
-            }
+                for (let i = 0; i < handTiles.length; i++) {
+                    const remainingTiles = handTiles.filter((_, index) => index !== i);
+                    tenpaiForm.push(isTenpai(remainingTiles));
+                }
 
-            // クリックされた牌がテンパイ形を維持できるか判定
-            const tileIndex = handTiles.indexOf(tile);
-            if (tenpaiForm[tileIndex].length === 0) {
-                // テンパイ形にならない牌は捨てられないようにする
-                console.log("テンパイを維持できないため捨てられません。");
-                return;
+                // クリックされた牌がテンパイ形を維持できるか判定
+                const tileIndex = handTiles.indexOf(tile);
+                if (tenpaiForm[tileIndex].length === 0) {
+                    // テンパイ形にならない牌は捨てられないようにする
+                    console.log("テンパイを維持できないため捨てられません。");
+                    return;
+                }
+            } else {
+                if (!tileElement.classList.contains("tsumo-tile")) {
+                    console.log("リーチ中のためツモ牌以外は捨てられません。");
+                    return;
+                }
             }
         }
 
@@ -2640,6 +2647,8 @@ function isUraDora(handData) {
 
     let doraCount = 0;
     let handTiles = [];
+    uraDoraTiles = [];
+    let doraDisplayedTiles = [];
     handData.sortedTiles.forEach(tile => {
         // 字牌の場合、数字を含めない
         handTiles.push(tile.number !== null ? `${tile.number}${tile.suit}` : `${tile.suit}`);
@@ -2676,12 +2685,12 @@ function isUraDora(handData) {
 
 /**
  * テンパイ判定を行う
- * @param {string[]} tiles 牌の文字列配列 (4枚)
+ * @param {string[]} tiles 牌の文字列配列 (4枚 or 1枚)
  * @returns {string[]} テンパイが成立する場合、待ち牌の配列。そうでない場合は空配列。
  */
 function isTenpai(tiles) {
-    // 手牌が4枚でなければテンパイ判定を行わない
-    if (tiles.length !== 4) {
+    // 手牌が4枚 or 1枚でなければテンパイ判定を行わない
+    if (!(tiles.length !== 4 || tiles.length !== 1)) {
         return [];
     }
 
@@ -2797,6 +2806,8 @@ function drawTile(playerId) {
     hideAllPonButtons(); // すべてのポンボタンを非表示に
     hideAllKanButtons(); // すべてのカンボタンを非表示に
     hideAllSkipButtons();   // すべてのスキップボタンを非表示に
+    isExecuteTsumoWaiting = false;
+    isExecuteAnkanWaiting = false;
 
     if (allTiles.length > 0) {
         const tile = allTiles.pop();
@@ -2810,7 +2821,7 @@ function drawTile(playerId) {
         }
 
         // 残り牌数の表示を更新
-        if (remainingTilesCount < 0) { //TODO テスト用
+        if (remainingTilesCount < 0) {
             console.log("流局です。次の局に進みます。");
             // 点数の移動を行う
             const scoreChanges = handlePointTransfer(null, null);
@@ -2856,7 +2867,7 @@ function drawTile(playerId) {
                 setupKanButtonListener(playerId, null, fourOfAKindTiles);
             }
 
-            // リーチ判定のために手牌から1牌除いた4牌で繰り返しテンパイ状態を判定する
+            // リーチ判定のために手牌から1牌除いた4牌もしくは1牌で繰り返しテンパイ状態を判定する
             let tenpaiForm = [];
             for (let i = 0; i < handTiles.length; i++) {
                 const remainingTiles = handTiles.filter((_, index) => index !== i);
