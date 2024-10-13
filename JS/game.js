@@ -47,6 +47,7 @@ let wallTiles = []; // 王牌
 let doraTiles = []; // ドラ
 let uraDoraTiles = []; // 裏ドラ
 let doraDisplayedTiles = []; // ドラ表示牌
+let uraDoraDisplayedTiles = []; // 裏ドラ表示牌
 let doraTileNumber = 1; // ドラ表示数
 let holaTiles = []; // 和了牌
 let holaMeldsTiles = []; // 和了鳴き牌
@@ -126,9 +127,11 @@ const backToTitleButton = document.getElementById('back-to-title-button');
 /**
  * 牌要素を作成する関数
  * @param {string} tile 牌の文字列表現 (例: "1萬")
+ * @param {string} isDiscarded 捨て牌かどうか
+ * @param {string} isUra 裏面かどうか
  * @returns {HTMLDivElement} 牌を表すHTMLDiv要素
  */
-function createTileElement(tile, isDiscarded = false) {
+function createTileElement(tile, isDiscarded = false, isUra) {
     const tileElement = document.createElement('div');
     tileElement.className = 'tile';
 
@@ -139,43 +142,50 @@ function createTileElement(tile, isDiscarded = false) {
 
     // 牌の画像を追加
     const imgElement = document.createElement('img');
-    // 牌の種類と数字を取得 (字牌は種類のみ)
-    const suit = tile.slice(-1);
-    const number = SUIT_TYPES.includes(suit) ? tile.slice(0, -1) : null;
-
-    // 画像ファイル名を生成
     let imgFileName = "";
-    if (number !== null) {
-        // 数牌の場合
-        switch (suit) {
-            case '萬': imgFileName = `manzu_${number}.png`; break;
-            case '筒': imgFileName = `pinzu_${number}.png`; break;
-            case '索': imgFileName = `sozu_${number}.png`; break;
-        }
+
+    if (isUra) {
+        imgFileName = "ura.png";
     } else {
-        // 字牌の場合
-        switch (suit) {
-            case '東': imgFileName = "zi_ton.png"; break;
-            case '南': imgFileName = "zi_nan.png"; break;
-            case '西': imgFileName = "zi_sha.png"; break;
-            case '北': imgFileName = "zi_pei.png"; break;
-            case '白': imgFileName = "zi_haku.png"; break;
-            case '發': imgFileName = "zi_hatsu.png"; break;
-            case '中': imgFileName = "zi_chun.png"; break;
+        // 牌の種類と数字を取得 (字牌は種類のみ)
+        const suit = tile.slice(-1);
+        const number = SUIT_TYPES.includes(suit) ? tile.slice(0, -1) : null;
+
+        // 画像ファイル名を生成
+        imgFileName = "";
+        if (number !== null) {
+            // 数牌の場合
+            switch (suit) {
+                case '萬': imgFileName = `manzu_${number}.png`; break;
+                case '筒': imgFileName = `pinzu_${number}.png`; break;
+                case '索': imgFileName = `sozu_${number}.png`; break;
+            }
+        } else {
+            // 字牌の場合
+            switch (suit) {
+                case '東': imgFileName = "zi_ton.png"; break;
+                case '南': imgFileName = "zi_nan.png"; break;
+                case '西': imgFileName = "zi_sha.png"; break;
+                case '北': imgFileName = "zi_pei.png"; break;
+                case '白': imgFileName = "zi_haku.png"; break;
+                case '發': imgFileName = "zi_hatsu.png"; break;
+                case '中': imgFileName = "zi_chun.png"; break;
+            }
         }
     }
-
     imgElement.src = `picture/tiles/${imgFileName}`; // 修正後の画像ファイルパス
     imgElement.alt = tile; // 画像が表示されない場合の代替テキスト
     tileElement.appendChild(imgElement);
 
     // 牌の種類に応じてクラスを追加
-    if (tile.includes('萬')) {
-        tileElement.classList.add('manzu');
-    } else if (tile.includes('筒')) {
-        tileElement.classList.add('pinzu');
-    } else if (tile.includes('索')) {
-        tileElement.classList.add('sozu');
+    if (tile !== null) {
+        if (tile.includes('萬')) {
+            tileElement.classList.add('manzu');
+        } else if (tile.includes('筒')) {
+            tileElement.classList.add('pinzu');
+        } else if (tile.includes('索')) {
+            tileElement.classList.add('sozu');
+        }
     }
 
     return tileElement;
@@ -193,7 +203,7 @@ function addTileToHand(playerId, tile, isTsumo = false) {
         console.error(`Element with ID ${playerId}-hand not found.`);
         return;
     }
-    const tileElement = createTileElement(tile);
+    const tileElement = createTileElement(tile, false, false);
 
     // ツモ牌の場合、tsumo-tileクラスを追加
     if (isTsumo) {
@@ -230,7 +240,7 @@ function addTileToDiscarded(playerId, tile) {
         console.error(`Element with ID ${playerId}-discarded not found.`);
         return;
     }
-    const discardedTileElement = createTileElement(tile, true); // 捨て牌であることを指定
+    const discardedTileElement = createTileElement(tile, true, false); // 捨て牌であることを指定
     playerDiscardedElement.appendChild(discardedTileElement);
 
     // フリテン判定用捨て牌リストを更新
@@ -318,6 +328,7 @@ function initializeGame() {
     uraDoraFans.fans = 0;
     doraTileNumber = 1;
     doraDisplayedTiles = [];
+    uraDoraDisplayedTiles = [];
     displayDoraTile(doraTileNumber);
 
     // 残り牌数を初期化
@@ -365,9 +376,9 @@ function initializeTiles() {
                 //TODO テスト用 
                 switch (i) {
                     case 1: allTiles.push('1萬'); break;
-                    case 2: allTiles.push('2萬'); break;
-                    case 3: allTiles.push('1萬'); break;
-                    case 4: allTiles.push('2萬'); break;
+                    // case 2: allTiles.push('2萬'); break;
+                    // case 3: allTiles.push('1萬'); break;
+                    // case 4: allTiles.push('2萬'); break;
                     // case 5: allTiles.push('白'); break;
                     // case 6: allTiles.push('發'); break;
                     // case 7: allTiles.push('2索'); break;
@@ -484,7 +495,6 @@ function displayDoraTile(doraTileNumber) {
     for (let i = 0; i < doraTileNumber; i++) {
         const tile = wallTiles[i];
         if (doraDisplayedTiles.length !== doraTileNumber && doraTileNumber > 0) {
-            doraDisplayedTiles = [];
             doraDisplayedTiles.push(tile);
         }
         const imgElement = document.createElement('img');
@@ -560,13 +570,63 @@ function handleGameEnd() {
     console.log(`ゲーム終了しました。`);
     // ゲーム終了のフラグを立てる
     gameStarted = false;
-    // TODO: ゲーム終了時の処理を実装 (例: 結果表示など)
+
+    // 点数順にプレイヤーと点数をソート
+    const sortedPlayers = Object.entries(playerScores).sort((a, b) => b[1] - a[1]);
+
+    // 結果画面のHTMLを生成
+    let resultHtml = ``;
+    sortedPlayers.forEach(([playerId, score], index) => {
+        let playerName = '';
+        switch (playerId) {
+            case "left":
+                playerName = '下家';
+                break;
+            case "bottom":
+                playerName = '自家';
+                break;
+            case "right":
+                playerName = '上家';
+                break;
+            case "top":
+                playerName = '対面';
+                break;
+        }
+        resultHtml += `<P>${index + 1}位&nbsp;${playerName}: ${score}点</P>`;
+    });
+
+    // 結果画面を表示
+    Swal.fire({
+        title: 'ゲーム終了',
+        html: resultHtml,
+        confirmButtonText: 'タイトルに戻る',
+        showCancelButton: false,
+        allowOutsideClick: false, // モーダル外をクリックして閉じないようにする
+        allowEscapeKey: false, // Escキーを押して閉じないようにする
+    }).then(() => {
+        // タイトル画面に戻る処理
+        window.location.href = 'index.html';
+    });
 }
 
 /**
  * 次の局に進む処理
  */
 async function proceedToNextRound() {
+    // 各プレイヤーの点数をチェック
+    let areAllPlayersPositive = true;
+    for (const playerId in playerScores) {
+        if (playerScores[playerId] < 0) {
+            areAllPlayersPositive = false;
+            break;
+        }
+    }
+    if (!areAllPlayersPositive) {
+        // 0点未満のプレイヤーがいる場合、ゲーム終了
+        handleGameEnd();
+        return;
+    }
+
     // 既に局の終了処理中であれば、処理を中断
     if (isRoundEnding) {
         return;
@@ -627,6 +687,7 @@ async function proceedToNextRound() {
     uraDoraFans.fans = 0;
     doraTileNumber = 1;
     doraDisplayedTiles = [];
+    uraDoraDisplayedTiles = [];
     displayDoraTile(doraTileNumber);
 
     // 残り牌数を初期化
@@ -1187,7 +1248,7 @@ function handlePon(playerId, targetPlayerId, tile) {
     const meldContainer = document.createElement('div'); // ポン牌をまとめるコンテナ
     meldContainer.classList.add('meld'); // スタイル適用のためクラスを追加
     for (let i = 0; i < 3; i++) {
-        const ponTileElement = createTileElement(tile);
+        const ponTileElement = createTileElement(tile, false, false);
         if (i === 0 && ((playerId === 'left' && targetPlayerId === 'top') ||
             (playerId === 'top' && targetPlayerId === 'right') ||
             (playerId === 'right' && targetPlayerId === 'bottom') ||
@@ -1277,7 +1338,7 @@ async function handleKan(playerId, targetPlayerId, tile) {
     meldContainer.classList.add('meld'); // スタイル適用のためクラスを追加
     let isChangeElement = false;
     for (let i = 0; i < 4; i++) {
-        const kanTileElement = createTileElement(tile);
+        const kanTileElement = createTileElement(tile, false, false);
 
         // 暗カンの場合、両端の牌 (i === 0 と i === 3) の画像を裏に変更
         if (!isKakan && targetPlayerId === null && (i === 0 || i === 3)) {
@@ -2681,7 +2742,7 @@ function isUraDora(handData) {
     let doraCount = 0;
     let handTiles = [];
     uraDoraTiles = [];
-    let doraDisplayedTiles = [];
+    uraDoraDisplayedTiles = [];
     handData.sortedTiles.forEach(tile => {
         // 字牌の場合、数字を含めない
         handTiles.push(tile.number !== null ? `${tile.number}${tile.suit}` : `${tile.suit}`);
@@ -2704,6 +2765,7 @@ function isUraDora(handData) {
 
         // 裏ドラに追加
         uraDoraTiles.push(uraDoraTile);
+        uraDoraDisplayedTiles.push(getPreviousTile(uraDoraTile));
     }
 
     // ドラ牌の数だけループ
@@ -2761,6 +2823,42 @@ function normalizeTileString(tile) {
         return tile; // 字牌はそのまま返す
     } else {
         return tile[1] + tile[0]; // 数牌は種類を先頭に
+    }
+}
+
+/**
+ * 牌の文字列が与えられたとき、そのひとつ前の牌を取得する
+ * @param {string} tile 牌の文字列 (例: "5萬", "1筒", "南", "白")
+ * @returns {string} ひとつ前の牌の文字列
+ */
+function getPreviousTile(tile) {
+    const suit = tile.slice(-1); // 牌の種類を取得 ("萬", "筒", "索", "東"など)
+    let number = parseInt(tile.slice(0, -1)); // 牌の数字を取得 (字牌の場合はNaN)
+
+    if (!isNaN(number)) {
+        // 数牌の場合
+        number = number === 1 ? 9 : number - 1; // 1の場合は9に戻す
+        return number + suit;
+    } else {
+        // 字牌の場合
+        const windTiles = ['東', '南', '西', '北'];
+        const dragonTiles = ['白', '發', '中'];
+
+        if (windTiles.includes(suit)) {
+            // 東南西北の場合
+            const currentIndex = windTiles.indexOf(suit);
+            const previousIndex = (currentIndex - 1 + windTiles.length) % windTiles.length; // 前のインデックスを取得 (ループ)
+            return windTiles[previousIndex];
+        } else if (dragonTiles.includes(suit)) {
+            // 白發中の場合
+            const currentIndex = dragonTiles.indexOf(suit);
+            const previousIndex = (currentIndex - 1 + dragonTiles.length) % dragonTiles.length; // 前のインデックスを取得 (ループ)
+            return dragonTiles[previousIndex];
+        } else {
+            // 上記以外の牌はエラー
+            console.error("無効な牌です:", tile);
+            return null;
+        }
     }
 }
 
@@ -2842,12 +2940,17 @@ function drawTile(playerId) {
     isExecuteTsumoWaiting = false;
     isExecuteAnkanWaiting = false;
 
-    if (allTiles.length > 0) {
-        const tile = allTiles.pop();
-        addTileToHand(playerId, tile, true);
+    if (allTiles.length >= 0) {
+        let tile = "";
+        if (allTiles.length > 0) {
+            tile = allTiles.pop();
+            // 残り牌数を更新
+            remainingTilesCount = allTiles.length;
+        } else {
+            // 残り牌数を-1とする
+            remainingTilesCount = -1;
+        }
 
-        // 残り牌数を更新
-        remainingTilesCount = allTiles.length;
         // リーチ後一巡以上経過していたら一巡目フラグを下げる
         if (isRiichi[playerId] && remainingTilesCount <= riichiTurn[playerId] - 4) {
             isRiichiFirstTurn[playerId] = false;
@@ -2855,20 +2958,25 @@ function drawTile(playerId) {
 
         // 残り牌数の表示を更新
         if (remainingTilesCount < 0) {
+            isRyuukyoku = true;
             console.log("流局です。次の局に進みます。");
             // 点数の移動を行う
             const scoreChanges = handlePointTransfer(null, null);
             // 局の結果画面表示
+            console.log(scoreChanges);
             showRoundResult(scoreChanges, null)
                 .then(() => { // confirmButtonTextが押された後に実行される処理
                     // 次の局に進める
                     proceedToNextRound();
                 });
+            return;
         } else {
             updateRemainingTilesDisplay();
             // ツモ音を再生
             playSound(dahaiSound);
         }
+
+        addTileToHand(playerId, tile, true);
 
         if (remainingTilesCount >= 1) {
             // 加カン判定
@@ -2895,9 +3003,14 @@ function drawTile(playerId) {
                 isExecuteAnkanWaiting = true;
                 // カンボタンを表示
                 showKanButtons(playerId);
-
                 // カンボタンのイベントリスナーを設定
                 setupKanButtonListener(playerId, null, fourOfAKindTiles);
+
+                // リーチしていたらスキップボタンあり
+                if (isRiichi[playerId]) {
+                    showSkipButtons(playerId);
+                    setupSkipButtonListener(playerId, true);
+                }
             }
 
             // リーチ判定のために手牌から1牌除いた4牌もしくは1牌で繰り返しテンパイ状態を判定する
@@ -3167,7 +3280,6 @@ function handlePointTransfer(holaPlayerId, ronTargetPlayerId) {
         for (const playerId of PLAYER_IDS) {
             const handTiles = getHandTiles(playerId);
             tenpaiStatus[playerId] = isTenpai(handTiles).length > 0; // テンパイかどうかを判定
-
         }
         // テンパイ人数によって罰符を決定
         let tenpaiCount = 0;
@@ -3183,14 +3295,14 @@ function handlePointTransfer(holaPlayerId, ronTargetPlayerId) {
                 break;
             case 1: // テンパイ者が1人の場合
                 for (const playerId in tenpaiStatus) {
-                    if (tenpaiStatus[playerId]) {
+                    if (tenpaiStatus[playerId] && playerId) {
                         // テンパイ者には他のプレイヤーから1000点ずつ
                         PLAYER_IDS.forEach(otherPlayerId => {
                             if (otherPlayerId !== playerId) {
-                                playerScores[playerId] += notenPenalty / 3;
                                 playerScores[otherPlayerId] -= notenPenalty / 3;
                             }
                         });
+                        playerScores[playerId] += notenPenalty;
                         break;
                     }
                 }
@@ -3198,72 +3310,71 @@ function handlePointTransfer(holaPlayerId, ronTargetPlayerId) {
             case 2: // テンパイ者が2人の場合
             case 3: // テンパイ者が3人の場合
                 for (const playerId in tenpaiStatus) {
+                    // ノーテン者にはテンパイ者それぞれに支払う
                     if (!tenpaiStatus[playerId]) {
-                        // ノーテン者にはテンパイ者それぞれに1000点ずつ
-                        PLAYER_IDS.forEach(otherPlayerId => {
-                            if (otherPlayerId !== playerId && tenpaiStatus[otherPlayerId]) {
-                                playerScores[playerId] -= notenPenalty / (4 - tenpaiCount);
-                                playerScores[otherPlayerId] += notenPenalty / (4 - tenpaiCount);
-                            }
-                        });
+                        playerScores[playerId] -= notenPenalty / (4 - tenpaiCount);
+                    } else {
+                        playerScores[playerId] += notenPenalty / tenpaiCount;
                     }
                 }
                 break;
         }
-    }
-
-    // 和了計算の準備
-    const isYakuman = winningHandData.yakumanPower > 0;
-
-    // 点数計算
-    let point = 0;
-    if (isYakuman) {
-        point = yakumanPoints * winningHandData.yakumanPower; // 役満の場合
-    } else if (winningHandData.fans >= 13) {
-        point = yakumanPoints; // 13翻以上は役満扱い
-    } else if (winningHandData.fans >= 11) {
-        point = sanBaimanPoints; // 三倍満
-    } else if (winningHandData.fans >= 8) {
-        point = baimanPoints; // 倍満
-    } else if (winningHandData.fans >= 6) {
-        point = hanemanPoints; // 跳満
-    } else if (winningHandData.fans >= 4) {
-        point = manganPoints; // 満貫
     } else {
-        point = 0; // 3翻以下は0点
-    }
 
-    // ツモの場合
-    if (holaPlayerId === ronTargetPlayerId) {
-        // 親の場合
-        if (isDealerHola) {
-            PLAYER_IDS.forEach(playerId => {
-                if (playerId !== holaPlayerId) {
-                    playerScores[playerId] -= point / 3;
-                    playerScores[holaPlayerId] += point / 3;
-                }
-            });
-        } else { //子の場合
-            PLAYER_IDS.forEach(playerId => {
-                if (playerId !== holaPlayerId) {
-                    if (playerId === PLAYER_IDS[dealerIndex]) {
-                        playerScores[playerId] -= point / 4 * 2;
-                    } else {
-                        playerScores[playerId] -= point / 4;
+        // 和了計算の準備
+        const isYakuman = winningHandData.yakumanPower > 0;
+
+        // 点数計算
+        let point = 0;
+        if (isYakuman) {
+            point = yakumanPoints * winningHandData.yakumanPower; // 役満の場合
+        } else if (winningHandData.fans >= 13) {
+            point = yakumanPoints; // 13翻以上は役満扱い
+        } else if (winningHandData.fans >= 11) {
+            point = sanBaimanPoints; // 三倍満
+        } else if (winningHandData.fans >= 8) {
+            point = baimanPoints; // 倍満
+        } else if (winningHandData.fans >= 6) {
+            point = hanemanPoints; // 跳満
+        } else if (winningHandData.fans >= 4) {
+            point = manganPoints; // 満貫
+        } else {
+            point = 0; // 3翻以下は0点
+        }
+
+        // ツモの場合
+        if (holaPlayerId === ronTargetPlayerId) {
+            // 親の場合
+            if (isDealerHola) {
+                PLAYER_IDS.forEach(playerId => {
+                    if (playerId !== holaPlayerId) {
+                        playerScores[playerId] -= point / 3;
+                        playerScores[holaPlayerId] += point / 3;
                     }
-                }
-            });
+                });
+            } else { //子の場合
+                PLAYER_IDS.forEach(playerId => {
+                    if (playerId !== holaPlayerId) {
+                        if (playerId === PLAYER_IDS[dealerIndex]) {
+                            playerScores[playerId] -= point / 4 * 2;
+                        } else {
+                            playerScores[playerId] -= point / 4;
+                        }
+                    }
+                });
+                playerScores[holaPlayerId] += point;
+            }
+        } else { // ロンの場合
+            playerScores[ronTargetPlayerId] -= point;
             playerScores[holaPlayerId] += point;
         }
-    } else { // ロンの場合
-        playerScores[ronTargetPlayerId] -= point;
-        playerScores[holaPlayerId] += point;
     }
 
     // 点数表示を更新
     updatePlayerScoresDisplay();
 
     // 移動前後の点数を返す
+    console.log({ previousScores, currentScores: playerScores });
     return { previousScores, currentScores: playerScores };
 }
 
@@ -3275,11 +3386,14 @@ function handlePointTransfer(holaPlayerId, ronTargetPlayerId) {
  */
 function showRoundResult(scoreChanges, playerId) {
 
-    // 供託の移動
-    playerScores[playerId] += riichiDeposit * 1000;
+    let scoreChangesHtml = '';
+    let doraWanpaiHtml = '';
+    let uraDoraWanpaiHtml = '';
+    let winningHandHtml = '';
+    let winningMeldHtml = '';
+    let yakuHtml = '<br>流局しました';
 
     // 点数変動があったプレイヤーのみを表示
-    let scoreChangesHtml = '';
     PLAYER_IDS.forEach(playerId => {
         let playerName = '';
         switch (playerId) {
@@ -3302,172 +3416,218 @@ function showRoundResult(scoreChanges, playerId) {
         }
     });
 
-    // 和了したプレイヤーの手牌を取得
-    const winningHandTiles = holaTiles;
-    let winningHandHtml = '<div class="winning-hand">';
-    winningHandTiles.forEach((tile, index) => {
-        const additionalClass = index === winningHandTiles.length - 1 ? ' last-tile' : '';
-        if (additionalClass === ' last-tile') {
-            winningHandHtml += `<div class="tile${additionalClass}"></div>`;
-        }
-        winningHandHtml += createTileElement(tile).outerHTML;
+    // ドラを含む王牌を取得
+    doraWanpaiHtml = '<div class="doraWanpai-tiles">ドラ';
+    // ドラ牌を追加
+    doraDisplayedTiles.forEach((tile) => {
+        doraWanpaiHtml += createTileElement(tile, false, false).outerHTML;
     });
-    winningHandHtml += '</div>';
+    // 4枚分まで裏牌を表示
+    if (doraDisplayedTiles.length - 1 < 3) {
+        for (let i = 0; i < 3 - (doraDisplayedTiles.length - 1); i++) {
+            doraWanpaiHtml += createTileElement(null, false, true).outerHTML;
+        }
+    }
+    doraWanpaiHtml += '</div>';
 
-    // 和了したプレイヤーの鳴き牌を取得
-    const winningMeldTiles = holaMeldsTiles[0];
-    let winningMeldHtml = '<div class="winning-meld">';
-    if (holaMeldsTiles.length != 0) {
-        for (i = 0; i < winningMeldTiles.tiles.length; i++) {
-            const meldTileElement = createTileElement(winningMeldTiles.tiles[i]);
-            switch (winningMeldTiles.meldType) {
-                case 'pon':
-                case 'kakan':
-                    console.log(i);
-                    console.log(winningMeldTiles.playerId);
-                    console.log(winningMeldTiles.targetPlayerId);
-                    if (i === 0 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'top') ||
-                        (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'right') ||
-                        (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'bottom') ||
-                        (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'left'))) {
-                        meldTileElement.classList.add('horizontal');
-                        if (winningMeldTiles.meldType === 'kakan') {
-                            const imgElement = meldTileElement.querySelector('img');
-                            imgElement.src = imgElement.src.replace('/tiles/', '/tiles_double/');
-                            imgElement.src = imgElement.src.replace('.png', '_double.png');
+    // 裏ドラを含む王牌を取得
+    uraDoraWanpaiHtml = '<div class="uraDoraWanpai-tiles">裏ドラ';
+    if (!isRyuukyoku) {
+        // ドラ牌を追加
+        uraDoraDisplayedTiles.forEach((tile) => {
+            uraDoraWanpaiHtml += createTileElement(tile, false, false).outerHTML;
+        });
+        // 4枚分まで裏牌を表示
+        if (uraDoraDisplayedTiles.length - 1 < 3) {
+            for (let i = 0; i < 3 - (uraDoraDisplayedTiles.length - 1); i++) {
+                uraDoraWanpaiHtml += createTileElement(null, false, true).outerHTML;
+            }
+        }
+    } else {
+        // 4枚分まで裏牌を表示
+        for (let i = 0; i < 4; i++) {
+            uraDoraWanpaiHtml += createTileElement(null, false, true).outerHTML;
+        }
+    }
+    uraDoraWanpaiHtml += '</div>';
+
+    if (playerId != null) {
+        // 供託の移動
+        playerScores[playerId] += riichiDeposit * 1000;
+
+        // 和了したプレイヤーの手牌を取得
+        const winningHandTiles = holaTiles;
+        winningHandHtml = '<div class="winning-hand">';
+        winningHandTiles.forEach((tile, index) => {
+            const additionalClass = index === winningHandTiles.length - 1 ? ' last-tile' : '';
+            if (additionalClass === ' last-tile') {
+                winningHandHtml += `<div class="tile${additionalClass}"></div>`;
+            }
+            winningHandHtml += createTileElement(tile, false, false).outerHTML;
+        });
+        winningHandHtml += '</div>';
+
+        // 和了したプレイヤーの鳴き牌を取得
+        const winningMeldTiles = holaMeldsTiles[0];
+        winningMeldHtml = '<div class="winning-meld">';
+        if (holaMeldsTiles.length != 0) {
+            for (i = 0; i < winningMeldTiles.tiles.length; i++) {
+                const meldTileElement = createTileElement(winningMeldTiles.tiles[i], false, false);
+                switch (winningMeldTiles.meldType) {
+                    case 'pon':
+                    case 'kakan':
+                        console.log(i);
+                        console.log(winningMeldTiles.playerId);
+                        console.log(winningMeldTiles.targetPlayerId);
+                        if (i === 0 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'top') ||
+                            (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'right') ||
+                            (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'bottom') ||
+                            (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'left'))) {
+                            meldTileElement.classList.add('horizontal');
+                            if (winningMeldTiles.meldType === 'kakan') {
+                                const imgElement = meldTileElement.querySelector('img');
+                                imgElement.src = imgElement.src.replace('/tiles/', '/tiles_double/');
+                                imgElement.src = imgElement.src.replace('.png', '_double.png');
+                            }
+                        } else if (i === 1 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'right') ||
+                            (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'bottom') ||
+                            (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'left') ||
+                            (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'top'))) {
+                            meldTileElement.classList.add('horizontal');
+                            if (winningMeldTiles.meldType === 'kakan') {
+                                const imgElement = meldTileElement.querySelector('img');
+                                imgElement.src = imgElement.src.replace('/tiles/', '/tiles_double/');
+                                imgElement.src = imgElement.src.replace('.png', '_double.png');
+                            }
+                        } else if (i === 2 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'bottom') ||
+                            (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'left') ||
+                            (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'top') ||
+                            (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'right'))) {
+                            meldTileElement.classList.add('horizontal');
+                            if (winningMeldTiles.meldType === 'kakan') {
+                                const imgElement = meldTileElement.querySelector('img');
+                                imgElement.src = imgElement.src.replace('/tiles/', '/tiles_double/');
+                                imgElement.src = imgElement.src.replace('.png', '_double.png');
+                            }
                         }
-                    } else if (i === 1 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'right') ||
-                        (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'bottom') ||
-                        (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'left') ||
-                        (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'top'))) {
-                        meldTileElement.classList.add('horizontal');
-                        if (winningMeldTiles.meldType === 'kakan') {
-                            const imgElement = meldTileElement.querySelector('img');
-                            imgElement.src = imgElement.src.replace('/tiles/', '/tiles_double/');
-                            imgElement.src = imgElement.src.replace('.png', '_double.png');
+                        winningMeldHtml += meldTileElement.outerHTML;
+                        break;
+                    case 'minkan':
+                        if (i === 0 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'top') ||
+                            (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'right') ||
+                            (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'bottom') ||
+                            (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'left'))) {
+                            meldTileElement.classList.add('horizontal');
+                        } else if (i === 1 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'right') ||
+                            (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'bottom') ||
+                            (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'left') ||
+                            (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'top'))) {
+                            meldTileElement.classList.add('horizontal');
+                        } else if (i === 3 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'bottom') ||
+                            (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'left') ||
+                            (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'top') ||
+                            (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'right'))) {
+                            meldTileElement.classList.add('horizontal');
                         }
-                    } else if (i === 2 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'bottom') ||
-                        (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'left') ||
-                        (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'top') ||
-                        (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'right'))) {
-                        meldTileElement.classList.add('horizontal');
-                        if (winningMeldTiles.meldType === 'kakan') {
+                        winningMeldHtml += meldTileElement.outerHTML;
+                        break;
+                    case 'ankan':
+                        if (i === 0 || i === 3) {
                             const imgElement = meldTileElement.querySelector('img');
-                            imgElement.src = imgElement.src.replace('/tiles/', '/tiles_double/');
-                            imgElement.src = imgElement.src.replace('.png', '_double.png');
+                            imgElement.src = 'picture/tiles/ura.png';
+                            imgElement.alt = '裏';
                         }
-                    }
-                    winningMeldHtml += meldTileElement.outerHTML;
+                        winningMeldHtml += meldTileElement.outerHTML;
+                        break;
+                }
+            }
+        }
+        winningMeldHtml += '</div>';
+
+        // 役の表示
+        let yakuRank = '';
+        if (winningHandData.yakumanPower > 0) {
+            switch (winningHandData.yakumanPower) {
+                case 1:
+                    yakuRank = '役満';
                     break;
-                case 'minkan':
-                    if (i === 0 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'top') ||
-                        (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'right') ||
-                        (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'bottom') ||
-                        (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'left'))) {
-                        meldTileElement.classList.add('horizontal');
-                    } else if (i === 1 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'right') ||
-                        (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'bottom') ||
-                        (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'left') ||
-                        (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'top'))) {
-                        meldTileElement.classList.add('horizontal');
-                    } else if (i === 3 && ((winningMeldTiles.playerId === 'left' && winningMeldTiles.targetPlayerId === 'bottom') ||
-                        (winningMeldTiles.playerId === 'top' && winningMeldTiles.targetPlayerId === 'left') ||
-                        (winningMeldTiles.playerId === 'right' && winningMeldTiles.targetPlayerId === 'top') ||
-                        (winningMeldTiles.playerId === 'bottom' && winningMeldTiles.targetPlayerId === 'right'))) {
-                        meldTileElement.classList.add('horizontal');
-                    }
-                    winningMeldHtml += meldTileElement.outerHTML;
+                case 2:
+                    yakuRank = '二倍役満';
                     break;
-                case 'ankan':
-                    if (i === 0 || i === 3) {
-                        const imgElement = meldTileElement.querySelector('img');
-                        imgElement.src = 'picture/tiles/ura.png';
-                        imgElement.alt = '裏';
-                    }
-                    winningMeldHtml += meldTileElement.outerHTML;
+                case 3:
+                    yakuRank = '三倍役満';
                     break;
+                case 4:
+                    yakuRank = '四倍役満';
+                    break;
+                case 5:
+                    yakuRank = '五倍役満';
+                    break;
+            }
+            if (winningHandData.yakumanList.length > 0) {
+                yakuHtml = '<div class="yaku-list"><br>';
+                winningHandData.yakumanList.forEach(yakuman => {
+                    yakuHtml += `${yakuman.name}（${yakuman.power}倍）</p>`;
+                });
+                yakuHtml += `<p style="font-weight: bold; font-size: larger; color: red;">${yakuRank}</p>`;
+            } else {
+                yakuHtml += '</div>';
+            }
+        } else {
+            switch (winningHandData.fans) {
+                case 1:
+                case 2:
+                case 3:
+                    yakuRank = '';
+                    break;
+                case 4:
+                case 5:
+                    yakuRank = '満貫';
+                    break;
+                case 6:
+                case 7:
+                    yakuRank = '跳満';
+                    break;
+                case 8:
+                case 9:
+                case 10:
+                    yakuRank = '倍満';
+                    break;
+                case 11:
+                case 12:
+                    yakuRank = '三倍満';
+                    break;
+                default:
+                    yakuRank = '役満';
+                    break;
+            }
+            if (winningHandData.yaku.length > 0) {
+                yakuHtml = '<div class="yaku-list">';
+                winningHandData.yaku.forEach(yaku => {
+                    if (yaku.name === 'ドラ' || yaku.name === '裏ドラ') {
+                        yakuHtml += `<p>${yaku.name}（${yaku.fans.fans}翻）</p>`;
+                    } else {
+                        yakuHtml += `<p>${yaku.name}（${yaku.fans}翻）</p>`;
+                    }
+                });
+                yakuHtml += `<p style="font-weight: bold; font-size: larger; color: red;">${winningHandData.fans}翻 ${yakuRank}</p>`;
+            } else {
+                yakuHtml += '</div>';
             }
         }
     }
-    winningMeldHtml += '</div>';
-
-    // 役の表示
-    let yakuRank = '';
-    let yakuHtml = '';
-    if (winningHandData.yakumanPower > 0) {
-        switch (winningHandData.yakumanPower) {
-            case 1:
-                yakuRank = '役満';
-                break;
-            case 2:
-                yakuRank = '二倍役満';
-                break;
-            case 3:
-                yakuRank = '三倍役満';
-                break;
-            case 4:
-                yakuRank = '四倍役満';
-                break;
-            case 5:
-                yakuRank = '五倍役満';
-                break;
-        }
-        if (winningHandData.yakumanList.length > 0) {
-            yakuHtml = '<div class="yaku-list"><br>';
-            winningHandData.yakumanList.forEach(yakuman => {
-                yakuHtml += `${yakuman.name}（${yakuman.power}倍）</p>`;
-            });
-            yakuHtml += `<p style="font-weight: bold; font-size: larger; color: red;">${yakuRank}</p>`;
-        } else {
-            yakuHtml += '</div>';
-        }
-    } else {
-        switch (winningHandData.fans) {
-            case 1:
-            case 2:
-            case 3:
-                yakuRank = '';
-                break;
-            case 4:
-            case 5:
-                yakuRank = '満貫';
-                break;
-            case 6:
-            case 7:
-                yakuRank = '跳満';
-                break;
-            case 8:
-            case 9:
-            case 10:
-                yakuRank = '倍満';
-                break;
-            case 11:
-            case 12:
-                yakuRank = '三倍満';
-                break;
-            default:
-                yakuRank = '役満';
-                break;
-        }
-        if (winningHandData.yaku.length > 0) {
-            yakuHtml = '<div class="yaku-list">';
-            winningHandData.yaku.forEach(yaku => {
-                if (yaku.name === 'ドラ' || yaku.name === '裏ドラ') {
-                    yakuHtml += `<p>${yaku.name}（${yaku.fans.fans}翻）</p>`;
-                } else {
-                    yakuHtml += `<p>${yaku.name}（${yaku.fans}翻）</p>`;
-                }
-            });
-            yakuHtml += `<p style="font-weight: bold; font-size: larger; color: red;">${winningHandData.fans}翻 ${yakuRank}</p>`;
-        } else {
-            yakuHtml += '</div>';
-        }
-    }
-
     // SweetAlert でリザルト画面を表示
     return Swal.fire({
-        title: `東${currentRound}局 結果`,
+        title: `東${currentRound}局`,
         html: `
+            <div class="result-dora">
+                <div class="doraWanpai-info">
+                    ${doraWanpaiHtml}
+                </div>
+                <div class="uraDoraWanpai-info">
+                    ${uraDoraWanpaiHtml}
+                </div>
+            </div>
             <div class="result-hand">
                 <div class="hand-info">
                     ${winningHandHtml}

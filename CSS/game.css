@@ -739,6 +739,26 @@ html {
 }
 
 /* リザルトのスタイル */
+.result-dora {
+    display: flex;
+    justify-content: space-around;
+    overflow-x: hidden;
+}
+
+.doraWanpai-tiles {
+    display: flex;
+    justify-content: left;
+    width: 400%;
+    margin-left: 50px;
+}
+
+.uraDoraWanpai-tiles {
+    display: flex;
+    justify-content: right;
+    width: 75%;
+    margin-left: 50px;
+}
+
 .result-hand {
     display: flex;
     justify-content: space-around;
@@ -765,6 +785,8 @@ html {
     margin-left: -25px;
 }
 
+.doraWanpai-info,
+.uraDoraWanpia-info,
 .hand-info,
 .meld-info {
     width: 100%;
@@ -786,9 +808,9 @@ html {
 
 .score-info {
     display: flex;
-    justify-content: right;
+    justify-content: center;
     width: 100%;
     flex-direction: column;
-    text-align: left;
+    text-align: center;
     margin-left: 50px;
 }
