@@ -692,6 +692,7 @@ async function startTurn(playerId) {
 
     // 和了でないとき
     if (!winningHandData.isWinning) {
+        // 直前のプレイヤーのリーチ後初回ターンであればリーチ成立処理を行う
         const playerIndex = PLAYER_IDS.indexOf(playerId);
         const previousPlayerIndex = (playerIndex - 1 + PLAYER_IDS.length) % PLAYER_IDS.length;
         if (isRiichiFirstDeposit[PLAYER_IDS[previousPlayerIndex]]) {
@@ -1027,6 +1028,21 @@ function setupPonButtonListener(playerId, targetPlayerId, tile) {
         hideAllTsumoButtons();
         hideAllSkipButtons();
 
+        // 直前のプレイヤーのリーチ後初回ターンであればリーチ成立処理を行う
+        const previousPlayerIndex = PLAYER_IDS.indexOf(targetPlayerId);
+        if (isRiichiFirstDeposit[PLAYER_IDS[previousPlayerIndex]]) {
+            // リーチ棒を表示
+            const riichiTenbouImage = document.getElementById(`${PLAYER_IDS[previousPlayerIndex]}-riichi-tenbou`);
+            riichiTenbouImage.style.display = 'block'; // 画像を表示
+            // 供託数をインクリメントする
+            riichiDeposit++;
+            updateRiichiDepositDisplay();
+            // 自分の点数から1000点引く
+            playerScores[PLAYER_IDS[previousPlayerIndex]] -= 1000;
+            updatePlayerScoresDisplay();
+            isRiichiFirstDeposit[PLAYER_IDS[previousPlayerIndex]] = false;
+        }
+
         // ポン処理の実装
         handlePon(playerId, targetPlayerId, tile)
     };
@@ -1050,6 +1066,23 @@ function setupKanButtonListener(playerId, targetPlayerId, tile) {
         hideAllKanButtons();
         hideAllTsumoButtons();
         hideAllSkipButtons();
+
+        if (targetPlayerId !== null) {
+            // 直前のプレイヤーのリーチ後初回ターンであればリーチ成立処理を行う
+            const previousPlayerIndex = PLAYER_IDS.indexOf(targetPlayerId);
+            if (isRiichiFirstDeposit[PLAYER_IDS[previousPlayerIndex]]) {
+                // リーチ棒を表示
+                const riichiTenbouImage = document.getElementById(`${PLAYER_IDS[previousPlayerIndex]}-riichi-tenbou`);
+                riichiTenbouImage.style.display = 'block'; // 画像を表示
+                // 供託数をインクリメントする
+                riichiDeposit++;
+                updateRiichiDepositDisplay();
+                // 自分の点数から1000点引く
+                playerScores[PLAYER_IDS[previousPlayerIndex]] -= 1000;
+                updatePlayerScoresDisplay();
+                isRiichiFirstDeposit[PLAYER_IDS[previousPlayerIndex]] = false;
+            }
+        }
 
         // カン処理の実装
         handleKan(playerId, targetPlayerId, tile)
@@ -2194,7 +2227,7 @@ function isDaisushi(handData) {
  */
 function isIiankantanki(handData) {
     // 鳴き牌情報の中に、暗カンが含まれているかどうかを判定
-    return handData.isTanki && melds[getCurrentPlayerId()].some(meld => meld.meldType.includes('ankan'));
+    return handData.isTanki && handData.melds.some(meld => meld.meldType.includes('ankan'));
 }
 /**
  * 立直の判定を行う
@@ -3380,7 +3413,7 @@ function showRoundResult(scoreChanges, playerId) {
                 break;
         }
         if (winningHandData.yakumanList.length > 0) {
-            yakuHtml = '<div class="yaku-list">';
+            yakuHtml = '<div class="yaku-list"><br>';
             winningHandData.yakumanList.forEach(yakuman => {
                 yakuHtml += `${yakuman.name}（${yakuman.power}倍）</p>`;
             });
