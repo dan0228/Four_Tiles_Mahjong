@@ -814,3 +814,11 @@ html {
     text-align: center;
     margin-left: 50px;
 }
+
+/* 宣言のスタイル */
+.declaration-image {
+    width: 100%;
+    position: absolute;
+    left: 0%;
+    top: 50px;
+}

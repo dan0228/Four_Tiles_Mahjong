@@ -372,19 +372,19 @@ function initializeTiles() {
         for (let i = 1; i <= NUM_TILES_PER_SUIT; i++) {
             // 各数牌を4枚ずつpush
             for (let j = 0; j < 4; j++) {
-                // allTiles.push(i + suit);
+                allTiles.push(i + suit);
                 //TODO テスト用 
-                switch (i) {
-                    case 1: allTiles.push('1萬'); break;
-                    // case 2: allTiles.push('2萬'); break;
-                    // case 3: allTiles.push('1萬'); break;
-                    // case 4: allTiles.push('2萬'); break;
-                    // case 5: allTiles.push('白'); break;
-                    // case 6: allTiles.push('發'); break;
-                    // case 7: allTiles.push('2索'); break;
-                    // case 8: allTiles.push('3索'); break;
-                    // case 9: allTiles.push('中'); break;
-                }
+                // switch (i) {
+                // case 1: allTiles.push('1萬'); break;
+                // case 2: allTiles.push('2萬'); break;
+                // case 3: allTiles.push('1萬'); break;
+                // case 4: allTiles.push('2萬'); break;
+                // case 5: allTiles.push('白'); break;
+                // case 6: allTiles.push('發'); break;
+                // case 7: allTiles.push('2索'); break;
+                // case 8: allTiles.push('3索'); break;
+                // case 9: allTiles.push('中'); break;
+                // }
             }
         }
     });
@@ -456,7 +456,14 @@ function updatePlayerScoresDisplay() {
         const scoreElement = document.getElementById(`${playerId}-score`);
         scoreElement.innerHTML = ''; // 既存の画像をクリア
 
-        const scoreString = playerScores[playerId].toString().padStart(5, '0');
+        let scoreString = playerScores[playerId].toString();
+        if (scoreString === '0') {
+            // 0点の場合は0のみ表示
+            scoreString = '0';
+        } else {
+            // 0点以外の場合、頭に0が表示されないようにする
+            scoreString = scoreString.replace(/^0+/, '');
+        }
         for (let i = 0; i < scoreString.length; i++) {
             const digitImage = document.createElement('img');
             digitImage.src = `Picture/number/${scoreString[i]}.png`;
@@ -881,6 +888,21 @@ async function handleDiscardAction(playerId, discardedTile) {
     hideAllTsumoButtons();
     hideAllKanButtons();
 
+    // リーチしている場合、捨て牌後にリーチの文字の画像を消す
+    if (isRiichi[playerId]) {
+        hideDeclaration(playerId, 'riichi');
+    }
+
+    // ポンした場合、捨て牌後にポンの文字の画像を消す
+    if (isPonDeclared) {
+        hideDeclaration(playerId, 'pon');
+    }
+
+    // カンした場合、捨て牌後にカンの文字の画像を消す
+    if (isKanDeclared) {
+        hideDeclaration(playerId, 'kan');
+    }
+
     // リーチ時の手牌の捨てられなかった牌のスタイルを元に戻す
     const playerHandElement = playerHandElements[playerId];
     const tiles = Array.from(playerHandElement.children);
@@ -1161,23 +1183,29 @@ function handleRon(ronPlayerId, ronTargetPlayerId) {
     // 役判定結果を表示
     console.log("役判定結果:", winningHandData);
 
-    // 点数の移動を行う
-    const scoreChanges = handlePointTransfer(ronPlayerId, ronTargetPlayerId);
-    // 局の結果画面表示
-    showRoundResult(scoreChanges, ronPlayerId)
-        .then(() => { // confirmButtonTextが押された後に実行される処理
-            // proceedToNextRound() の完了後に isRoundEnding を false に戻す
-            if (!isRoundEnding) {
-                // 親がロンした場合、親は変わらず次の局へは進まない
-                if (ronPlayerId === PLAYER_IDS[dealerIndex]) {
-                    console.log("親がロンしたため、局は継続です。");
-                    isDealerHola = true;
+    // ロンを表示
+    showDeclaration(ronPlayerId, 'ron');
+
+    // 1秒後に点数移動と結果画面表示
+    setTimeout(() => {
+        // 点数の移動を行う
+        const scoreChanges = handlePointTransfer(ronPlayerId, ronTargetPlayerId);
+        // 局の結果画面表示
+        showRoundResult(scoreChanges, ronPlayerId)
+            .then(() => { // confirmButtonTextが押された後に実行される処理
+                // proceedToNextRound() の完了後に isRoundEnding を false に戻す
+                if (!isRoundEnding) {
+                    // 親がロンした場合、親は変わらず次の局へは進まない
+                    if (ronPlayerId === PLAYER_IDS[dealerIndex]) {
+                        console.log("親がロンしたため、局は継続です。");
+                        isDealerHola = true;
+                    }
+                    proceedToNextRound().then(() => {
+                        isRoundEnding = false;
+                    });
                 }
-                proceedToNextRound().then(() => {
-                    isRoundEnding = false;
-                });
-            }
-        });
+            });
+    }, 1000); // 1秒の遅延
 }
 
 /**
@@ -1189,6 +1217,8 @@ function handleRiichi(playerId) {
     isRiichiFirstDeposit[playerId] = true;
     // リーチ宣言時にテンパイ不可の牌をグレー表示にする
     disableNonTenpaiTiles(playerId);
+    // リーチを表示
+    showDeclaration(playerId, 'riichi');
 }
 
 /**
@@ -1201,24 +1231,29 @@ function handleTsumo(playerId) {
     // 役判定結果を表示
     console.log("役判定結果:", winningHandData);
 
-    // ... (winningHandData を利用した処理) ...
-    // 点数の移動を行う
-    const scoreChanges = handlePointTransfer(playerId, playerId);
-    // 局の結果画面表示
-    showRoundResult(scoreChanges, playerId)
-        .then(() => { // confirmButtonTextが押された後に実行される処理
-            // proceedToNextRound() の完了後に isRoundEnding を false に戻す
-            if (!isRoundEnding) {
-                // 親がツモした場合、親は変わらず次の局へは進まない
-                if (playerId === PLAYER_IDS[dealerIndex]) {
-                    console.log("親がツモしたため、局は継続です。");
-                    isDealerHola = true;
+    // ツモを表示
+    showDeclaration(playerId, 'tsumo');
+
+    // 1秒後に点数移動と結果画面表示
+    setTimeout(() => {
+        // 点数の移動を行う
+        const scoreChanges = handlePointTransfer(playerId, playerId);
+        // 局の結果画面表示
+        showRoundResult(scoreChanges, playerId)
+            .then(() => { // confirmButtonTextが押された後に実行される処理
+                // proceedToNextRound() の完了後に isRoundEnding を false に戻す
+                if (!isRoundEnding) {
+                    // 親がツモした場合、親は変わらず次の局へは進まない
+                    if (playerId === PLAYER_IDS[dealerIndex]) {
+                        console.log("親がツモしたため、局は継続です。");
+                        isDealerHola = true;
+                    }
+                    proceedToNextRound().then(() => {
+                        isRoundEnding = false;
+                    });
                 }
-                proceedToNextRound().then(() => {
-                    isRoundEnding = false;
-                });
-            }
-        });
+            });
+    }, 1000); // 1秒の遅延
 }
 
 /**
@@ -1229,6 +1264,9 @@ function handleTsumo(playerId) {
  */
 function handlePon(playerId, targetPlayerId, tile) {
     console.log(`${playerId} が ${tile} でポンしました！`);
+
+    // ポンを表示
+    showDeclaration(playerId, 'pon');
 
     // 鳴き牌情報をmeldsに格納
     melds[playerId].push({
@@ -1287,6 +1325,9 @@ function handlePon(playerId, targetPlayerId, tile) {
  */
 async function handleKan(playerId, targetPlayerId, tile) {
     console.log(`${playerId} が ${tile} でカンしました！`);
+
+    // カンを表示
+    showDeclaration(playerId, 'kan');
 
     let isKakan = false;
 
@@ -3211,6 +3252,50 @@ function hideAllKanButtons() {
  */
 function hideAllSkipButtons() {
     Object.values(skipButtons).forEach(button => button.style.display = 'none');
+}
+
+/**
+ * 宣言を表示する
+ * @param {string} playerId 宣言したプレイヤーID 
+ * @param {string} declarationType 宣言の種類 ('ron', 'tsumo', 'riichi', 'pon', 'kan')
+ */
+function showDeclaration(playerId, declarationType) {
+    // 宣言の画像を作成
+    const declarationImage = document.createElement('img');
+    switch (declarationType) {
+        case "ron":
+            declarationImage.src = 'Picture/ron2.png';
+            break;
+        case "tsumo":
+            declarationImage.src = 'Picture/tsumo2.png';
+            break;
+        case "riichi":
+            declarationImage.src = 'Picture/riichi2.png';
+            break;
+        case "pon":
+            declarationImage.src = 'Picture/pon2.png';
+            break;
+        case "kan":
+            declarationImage.src = 'Picture/kan2.png';
+            break;
+    }
+    declarationImage.classList.add('declaration-image');
+    // 表示位置を調整 (自分の捨て牌の上に重なるように)
+    const playerDiscardedElement = playerDiscardedElements[playerId];
+    playerDiscardedElement.appendChild(declarationImage);
+}
+
+/**
+ * 宣言画像を消す
+ * @param {string} playerId 宣言したプレイヤーID
+ * @param {string} declarationType 宣言の種類 ('ron', 'tsumo', 'riichi', 'pon', 'kan')
+ */
+function hideDeclaration(playerId, declarationType) {
+    const playerDiscardedElement = playerDiscardedElements[playerId];
+    const declarationImage = playerDiscardedElement.querySelector(`img[src*="${declarationType}2.png"]`);
+    if (declarationImage) {
+        playerDiscardedElement.removeChild(declarationImage);
+    }
 }
 
 /**
