@@ -1575,7 +1575,11 @@ function checkRon(playerId, discardPlayerId) {
 
     if (lastDiscardedTile) {
         winningHandData = isWinningHand([...handTiles, lastDiscardedTile], discardPlayerId, playerId, true);
-        return winningHandData.isWinning; // isWinningプロパティの値を返す
+        // 役満か役が2つ以上あるとき、もしくは役がひとつでかつドラではないとき
+        if (winningHandData.yakumanPower > 0 || winningHandData.yaku.length >= 2 ||
+            (winningHandData.yaku.length === 1 && !winningHandData.yaku.some(yaku => yaku.name === 'ドラ'))) {
+            return winningHandData.isWinning; // isWinningプロパティの値を返す
+        }
     }
 
     return false;
