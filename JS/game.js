@@ -1578,7 +1578,12 @@ function checkRon(playerId, discardPlayerId) {
         // 役満か役が2つ以上あるとき、もしくは役がひとつでかつドラではないとき
         if (winningHandData.yakumanPower > 0 || winningHandData.yaku.length >= 2 ||
             (winningHandData.yaku.length === 1 && !winningHandData.yaku.some(yaku => yaku.name === 'ドラ'))) {
-            return winningHandData.isWinning; // isWinningプロパティの値を返す
+            return true;
+        } else if (winningHandData.isWinning) {
+            isFuriten[playerId] = true;
+            // フリテン状態に応じて画像を表示/非表示
+            const furitenImage = document.getElementById(`${playerId}-furiten`);
+            furitenImage.style.display = isFuriten[playerId] ? 'block' : 'none';
         }
     }
 
