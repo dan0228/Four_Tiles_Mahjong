@@ -1,0 +1,67 @@
+body,
+html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    overflow: hidden;
+}
+
+#app-container {
+    /* アプリ全体を囲むコンテナ */
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('../Picture/title_back.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    overflow: hidden;
+}
+
+#title-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #f88484;
+    text-shadow: 10px 10px 10px rgba(0, 0, 0, 0.5);
+}
+
+h1 {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8vw;
+    margin-bottom: 5%;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    margin-top: 10%;
+}
+
+#vsCPU-button,
+#vsOnline-button,
+#manual-button,
+#rule-button {
+    font-size: 2.5vw;
+    border: none;
+    background-color: rgb(255, 255, 255);
+    cursor: pointer;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    margin-bottom: 1%;
+    width: 20%;
+    height: 10%;
+}
+
+#vsCPU-button {
+    margin-top: 15%;
+}
