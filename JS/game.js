@@ -859,6 +859,9 @@ function handleTileClick(playerId, tile, tileElement) {
             }
         }
 
+        // 打牌音を再生
+        playSound(dahaiSound);
+
         removeTileFromHand(playerId, tileElement);
         addTileToDiscarded(playerId, tile);
         sortHand(playerId);
@@ -869,9 +872,6 @@ function handleTileClick(playerId, tile, tileElement) {
             displayDoraTile(doraTileNumber);
             isMinkanOrKakanDeclared = false;
         }
-
-        // 打牌音を再生
-        playSound(dahaiSound);
 
         // 捨て牌に対する処理
         handleDiscardAction(playerId, tile);
@@ -3069,10 +3069,11 @@ function drawTile(playerId) {
                 const remainingTiles = handTiles.filter((_, index) => index !== i);
                 tenpaiForm.push(isTenpai(remainingTiles));
             }
-            // テンパイかつ、リーチ中でないかつ、鳴いてないもしくは暗槓のとき
+            // テンパイかつ、リーチ中でないかつ、鳴いてないもしくは暗槓かつ、持ち点が1000点以上のとき
             if (tenpaiForm.some(waitingTiles => waitingTiles.length > 0) &&
                 !isRiichi[playerId] &&
-                (melds[playerId].length === 0 || melds[playerId].some(meld => meld.meldType === 'ankan'))) {
+                (melds[playerId].length === 0 || melds[playerId].some(meld => meld.meldType === 'ankan')) &&
+                playerScores[playerId] >= 1000) {
                 showRiichiButtons(playerId);
                 setupRiichiButtonListener(playerId);
             }
@@ -3432,6 +3433,9 @@ function handlePointTransfer(holaPlayerId, ronTargetPlayerId) {
             point = hanemanPoints; // 跳満
         } else if (winningHandData.fans >= 4) {
             point = manganPoints; // 満貫
+            if (winningHandData.fans === 4 && winningHandData.yaku.includes("平和") && winningHandData.yaku.includes("門前清自摸和")) {
+                point = 0; // ピンヅモは満貫でない
+            }
         } else {
             point = 0; // 3翻以下は0点
         }
@@ -3675,6 +3679,12 @@ function showRoundResult(scoreChanges, playerId) {
                     yakuRank = '';
                     break;
                 case 4:
+                    if (winningHandData.fans === 4 && winningHandData.yaku.includes("平和") && winningHandData.yaku.includes("門前清自摸和")) {
+                        yakuRank = '';
+                        break;
+                    }
+                    yakuRank = '満貫';
+                    break;
                 case 5:
                     yakuRank = '満貫';
                     break;

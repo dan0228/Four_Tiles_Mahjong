@@ -42,7 +42,7 @@ h1 {
     top: 10%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 8vw;
+    font-size: 7vw;
     margin-bottom: 5%;
     font-family: 'M PLUS Rounded 1c', sans-serif;
     margin-top: 10%;
@@ -52,7 +52,7 @@ h1 {
 #vsOnline-button,
 #manual-button,
 #rule-button {
-    font-size: 2.5vw;
+    font-size: 2vw;
     border: none;
     background-color: rgb(255, 255, 255);
     cursor: pointer;
