@@ -45,13 +45,14 @@ h1 {
     font-size: 7vw;
     margin-bottom: 5%;
     font-family: 'M PLUS Rounded 1c', sans-serif;
-    margin-top: 10%;
+    margin-top: 7%;
 }
 
 #vsCPU-button,
 #vsOnline-button,
 #manual-button,
-#rule-button {
+#rule-button,
+#yakuList-button {
     font-size: 2vw;
     border: none;
     background-color: rgb(255, 255, 255);
