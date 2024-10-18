@@ -53,7 +53,7 @@ h1 {
 #manual-button,
 #rule-button,
 #yakuList-button {
-    font-size: 2vw;
+    font-size: 1.6vw;
     border: none;
     background-color: rgb(255, 255, 255);
     cursor: pointer;
@@ -65,4 +65,8 @@ h1 {
 
 #vsCPU-button {
     margin-top: 15%;
+}
+
+#vsOnline-button {
+    text-decoration: line-through;
 }

@@ -1,3 +1,5 @@
+let mode = "";
+
 // 牌の種類と数を定義
 const SUIT_TYPES = ['萬', '筒', '索'];
 const HONOR_TYPES = ['東', '南', '西', '北', '白', '發', '中'];
@@ -104,7 +106,9 @@ let ronButtons = {};
 let ponButtons = {};
 let kanButtons = {};
 let skipButtons = {};
-let remainingTilesElement = null; // 残り牌数を表示する要素をキャッシュ
+let remainingTilesElement1 = null; // 残り牌数を表示する要素をキャッシュ
+let remainingTilesElement2 = null; // 残り牌数を表示する要素をキャッシュ
+let remainingTilesElement3 = null; // 残り牌数を表示する要素をキャッシュ
 
 // audioタグを取得
 const dahaiSound = document.getElementById("dahaiSound");
@@ -203,8 +207,12 @@ function addTileToHand(playerId, tile, isTsumo = false) {
         console.error(`Element with ID ${playerId}-hand not found.`);
         return;
     }
-    const tileElement = createTileElement(tile, false, false);
-
+    let isUra = false;
+    if (mode === "cpu" && playerId !== "bottom") {
+        isUra = true;
+    }
+    const tileElement = createTileElement(tile, false, isUra);
+    // const tileElement = createTileElement(tile, false, false); // TODOテスト用
     // ツモ牌の場合、tsumo-tileクラスを追加
     if (isTsumo) {
         tileElement.classList.add("tsumo-tile");
@@ -375,15 +383,15 @@ function initializeTiles() {
                 allTiles.push(i + suit);
                 //TODO テスト用 
                 // switch (i) {
-                // case 1: allTiles.push('1萬'); break;
-                // case 2: allTiles.push('2萬'); break;
-                // case 3: allTiles.push('1萬'); break;
-                // case 4: allTiles.push('2萬'); break;
-                // case 5: allTiles.push('白'); break;
-                // case 6: allTiles.push('發'); break;
-                // case 7: allTiles.push('2索'); break;
-                // case 8: allTiles.push('3索'); break;
-                // case 9: allTiles.push('中'); break;
+                //     case 1: allTiles.push('1萬'); break;
+                //     case 2: allTiles.push('2萬'); break;
+                //     case 3: allTiles.push('1萬'); break;
+                //     case 4: allTiles.push('2萬'); break;
+                //     case 5: allTiles.push('1萬'); break;
+                //     case 6: allTiles.push('1萬'); break;
+                //     case 7: allTiles.push('1萬'); break;
+                //     case 8: allTiles.push('1萬'); break;
+                //     case 9: allTiles.push('1萬'); break;
                 // }
             }
         }
@@ -414,7 +422,9 @@ function cacheDOMElements() {
         skipButtons[playerId] = document.getElementById(playerId + '-skip-button');
     });
     // 残り牌数を表示する要素をキャッシュ
-    remainingTilesElement = document.getElementById("remaining-tiles");
+    remainingTilesElement1 = document.getElementById("remaining-tiles-hundreds");
+    remainingTilesElement2 = document.getElementById("remaining-tiles-tens");
+    remainingTilesElement3 = document.getElementById("remaining-tiles-ones");
 }
 
 /**
@@ -776,8 +786,8 @@ async function startTurn(playerId) {
             isRiichiFirstDeposit[PLAYER_IDS[previousPlayerIndex]] = false;
         }
         // リーチしている場合は自動でツモ切り
-        if (isRiichi[playerId] && remainingTilesCount >= 0) {
-            let timeoutTime = 1000;
+        if (isRiichi[playerId] && !isRiichiFirstDeposit[playerId] && remainingTilesCount >= 0) {
+            let timeoutTime = 700;
             while (isExecuteAnkanWaiting || isExecuteTsumoWaiting) {
                 timeoutTime = 100;
                 // 一定時間待機 (ブラウザがフリーズしないように)
@@ -799,7 +809,28 @@ async function startTurn(playerId) {
 
                 // 捨て牌に対する処理
                 handleDiscardAction(playerId, tsumoTile);
-            }, timeoutTime); // 1秒後にツモ切り
+            }, timeoutTime);
+            playSound(dahaiSound);
+        } else if (mode === "cpu" && playerId !== "bottom" && remainingTilesCount >= 0) { // CPU対戦モードのときは自動で牌を捨てる
+            let timeoutTime = 700;
+            setTimeout(() => {
+                const discardedTileElement = chooseDiscardTileForCPU(playerId);
+                const discardedTile = discardedTileElement.querySelector('img').alt;
+                // 手牌から牌を削除
+                removeTileFromHand(playerId, discardedTileElement);
+
+                // 捨て牌に追加
+                addTileToDiscarded(playerId, discardedTile);
+
+                // 手牌をソート
+                let timeoutTime = 100;
+                setTimeout(() => {
+                    sortHand(playerId);
+                }, timeoutTime);
+
+                // 捨て牌に対する処理
+                handleDiscardAction(playerId, discardedTile);
+            }, timeoutTime);
             playSound(dahaiSound);
         }
     }
@@ -826,6 +857,11 @@ function endTurn() {
  * @param {HTMLDivElement} tileElement クリックされた牌のHTMLDiv要素
  */
 function handleTileClick(playerId, tile, tileElement) {
+
+    // CPU対戦モードのときはクリックできないようにする
+    if (mode === "cpu" && playerId !== "bottom") {
+        return;
+    }
     // リーチ中は牌をクリックできないようにする
     if (isRiichi[playerId] && !isRiichiFirstTurn[playerId] && !isExecuteTsumoWaiting) {
         return;
@@ -864,7 +900,10 @@ function handleTileClick(playerId, tile, tileElement) {
 
         removeTileFromHand(playerId, tileElement);
         addTileToDiscarded(playerId, tile);
-        sortHand(playerId);
+        let timeoutTime = 100;
+        setTimeout(() => {
+            sortHand(playerId);
+        }, timeoutTime);
 
         if (isMinkanOrKakanDeclared) {
             // ドラを追加
@@ -936,12 +975,20 @@ async function handleDiscardAction(playerId, discardedTile) {
         // フリテンでなく、ロン可能か
         if (!isFuriten[otherPlayerId] && checkRon(otherPlayerId, playerId)) {
             isRonPossible = true;
-            // ロンボタンとスキップボタンを表示
-            showRonButtons(otherPlayerId);
-            showSkipButtons(otherPlayerId);
+            // CPU対戦モードのときはロン可能であればロンする
+            if (mode === "cpu" && otherPlayerId !== "bottom") {
+                // ロン宣言済み
+                isRonDeclared = true;
+                // ロン処理の実装
+                handleRon(otherPlayerId, playerId);
+            } else {
+                // ロンボタンとスキップボタンを表示
+                showRonButtons(otherPlayerId);
+                showSkipButtons(otherPlayerId);
 
-            // ロンボタンのイベントリスナーを設定
-            setupRonButtonListener(otherPlayerId, playerId);
+                // ロンボタンのイベントリスナーを設定
+                setupRonButtonListener(otherPlayerId, playerId);
+            }
         }
 
         if (isRonPossible) {
@@ -973,30 +1020,35 @@ async function handleDiscardAction(playerId, discardedTile) {
             isPonDeclared = false;
             isKanDeclared = false;
 
-            // リーチしていないとき、ポン可能か判定
-            if (remainingTilesCount >= 1 && !isRiichi[otherPlayerId]) {
-                if (checkPon(otherPlayerId, discardedTile)) {
-                    isPonPossible = true;
+            // CPU対戦モードのときはポン、明カンしない
+            if (mode === "cpu" && otherPlayerId !== "bottom") {
+                // 何もしない
+            } else {
+                // リーチしていないとき、ポン可能か判定
+                if (remainingTilesCount >= 1 && !isRiichi[otherPlayerId]) {
+                    if (checkPon(otherPlayerId, discardedTile)) {
+                        isPonPossible = true;
 
-                    // ポンボタンとスキップボタンを表示
-                    showPonButtons(otherPlayerId);
-                    showSkipButtons(otherPlayerId);
+                        // ポンボタンとスキップボタンを表示
+                        showPonButtons(otherPlayerId);
+                        showSkipButtons(otherPlayerId);
 
-                    // ポンボタンのイベントリスナーを設定
-                    setupPonButtonListener(otherPlayerId, playerId, discardedTile);
+                        // ポンボタンのイベントリスナーを設定
+                        setupPonButtonListener(otherPlayerId, playerId, discardedTile);
+                    }
                 }
-            }
 
-            // リーチしていないとき、カン可能か
-            if (remainingTilesCount >= 1 && !isRiichi[otherPlayerId]) {
-                if (checkKan(otherPlayerId, discardedTile)) {
-                    isKanPossible = true;
+                // リーチしていないとき、カン可能か
+                if (remainingTilesCount >= 1 && !isRiichi[otherPlayerId]) {
+                    if (checkKan(otherPlayerId, discardedTile)) {
+                        isKanPossible = true;
 
-                    // カンボタンを表示
-                    showKanButtons(otherPlayerId);
+                        // カンボタンを表示
+                        showKanButtons(otherPlayerId);
 
-                    // カンボタンのイベントリスナーを設定
-                    setupKanButtonListener(otherPlayerId, playerId, discardedTile);
+                        // カンボタンのイベントリスナーを設定
+                        setupKanButtonListener(otherPlayerId, playerId, discardedTile);
+                    }
                 }
             }
 
@@ -1185,6 +1237,10 @@ function handleRon(ronPlayerId, ronTargetPlayerId) {
 
     // ロンを表示
     showDeclaration(ronPlayerId, 'ron');
+    hideDeclaration(ronPlayerId, 'riichi');
+    hideDeclaration(ronPlayerId, 'tsumo');
+    hideDeclaration(ronPlayerId, 'pon');
+    hideDeclaration(ronPlayerId, 'kan');
 
     // 1秒後に点数移動と結果画面表示
     setTimeout(() => {
@@ -1219,6 +1275,10 @@ function handleRiichi(playerId) {
     disableNonTenpaiTiles(playerId);
     // リーチを表示
     showDeclaration(playerId, 'riichi');
+    hideDeclaration(playerId, 'tsumo');
+    hideDeclaration(playerId, 'ron');
+    hideDeclaration(playerId, 'pon');
+    hideDeclaration(playerId, 'kan');
 }
 
 /**
@@ -1233,6 +1293,10 @@ function handleTsumo(playerId) {
 
     // ツモを表示
     showDeclaration(playerId, 'tsumo');
+    hideDeclaration(playerId, 'riichi');
+    hideDeclaration(playerId, 'ron');
+    hideDeclaration(playerId, 'pon');
+    hideDeclaration(playerId, 'kan');
 
     // 1秒後に点数移動と結果画面表示
     setTimeout(() => {
@@ -1267,6 +1331,10 @@ function handlePon(playerId, targetPlayerId, tile) {
 
     // ポンを表示
     showDeclaration(playerId, 'pon');
+    hideDeclaration(playerId, 'riichi');
+    hideDeclaration(playerId, 'ron');
+    hideDeclaration(playerId, 'tsumo');
+    hideDeclaration(playerId, 'kan');
 
     // 鳴き牌情報をmeldsに格納
     melds[playerId].push({
@@ -1328,6 +1396,10 @@ async function handleKan(playerId, targetPlayerId, tile) {
 
     // カンを表示
     showDeclaration(playerId, 'kan');
+    hideDeclaration(playerId, 'riichi');
+    hideDeclaration(playerId, 'ron');
+    hideDeclaration(playerId, 'pon');
+    hideDeclaration(playerId, 'tsumo');
 
     let isKakan = false;
 
@@ -1535,6 +1607,44 @@ function removeTilesFromHand(playerId, tile, count) {
     });
 }
 
+/**
+ * CPUプレイヤーが捨てる牌を選択する関数
+ * @param {string} playerId プレイヤーID
+ * @returns {HTMLDivElement} 捨てる牌のHTMLDiv要素
+ */
+function chooseDiscardTileForCPU(playerId) {
+    const handTilesDiv = Array.from(playerHandElements[playerId].children);
+
+    // プレイヤーのリーチ後初回ターン
+    if (isRiichiFirstDeposit[playerId]) {
+        const handTiles = getHandTiles(playerId);
+        for (let i = 0; i < handTiles.length; i++) {
+            // 配列のコピーを作成
+            const copiedHandTiles = [...handTiles];
+
+            // i番目の要素を削除
+            copiedHandTiles.splice(i, 1);
+
+            // テンパイが維持される牌を捨てる
+            if (isTenpai(copiedHandTiles).length > 0) {
+                let discardedTileIndex = -1; // 要素のインデックス
+
+                for (let i = 0; i < handTiles.length; i++) {
+                    if (!copiedHandTiles.includes(handTiles[i])) {
+                        discardedTileIndex = i;
+                        break; // 最初に見つかったインデックスでループを抜ける
+                    }
+                }
+                return handTilesDiv[discardedTileIndex];
+            }
+        }
+    } else {
+        // ランダムに手牌から1枚選んで捨てる
+        const randomIndex = Math.floor(Math.random() * handTilesDiv.length);
+        return handTilesDiv[randomIndex];
+    }
+}
+
 // --- 判定に関する関数 ---
 
 /**
@@ -1548,11 +1658,21 @@ function checkTsumo(playerId) {
     if (winningHandData.isWinning) {
         isExecuteTsumoWaiting = true;
 
-        // 該当するプレイヤーのツモボタンを表示
-        showTsumoButtons(playerId);
+        // CPU対戦モードのときはツモ可能であればツモする
+        if (mode === "cpu" && playerId !== "bottom") {
+            // CPU対戦の時、CPUは跳満以上もしくはリーチ中でないと和了しない
+            if (winningHandData.yakumanPower > 0 || winningHandData.fans >= 6 || isRiichi[playerId]) {
+                isExecuteTsumoWaiting = false;
+                // ツモ処理の実装
+                handleTsumo(playerId);
+            }
+        } else {
+            // 該当するプレイヤーのツモボタンを表示
+            showTsumoButtons(playerId);
 
-        // ツモボタンのイベントリスナーを設定
-        setupTsumoButtonListener(playerId);
+            // ツモボタンのイベントリスナーを設定
+            setupTsumoButtonListener(playerId);
+        }
     }
 }
 
@@ -1575,15 +1695,29 @@ function checkRon(playerId, discardPlayerId) {
 
     if (lastDiscardedTile) {
         winningHandData = isWinningHand([...handTiles, lastDiscardedTile], discardPlayerId, playerId, true);
+
         // 役満か役が2つ以上あるとき、もしくは役がひとつでかつドラではないとき
         if (winningHandData.yakumanPower > 0 || winningHandData.yaku.length >= 2 ||
             (winningHandData.yaku.length === 1 && !winningHandData.yaku.some(yaku => yaku.name === 'ドラ'))) {
-            return true;
+            // CPU対戦の時、CPUは跳満以上、もしくはリーチ中でないと和了しない
+            if (mode === "cpu" && playerId !== "bottom") {
+                if (winningHandData.yakumanPower > 0 || winningHandData.fans >= 6 || isRiichi[playerId]) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
         } else if (winningHandData.isWinning) {
             isFuriten[playerId] = true;
             // フリテン状態に応じて画像を表示/非表示
-            const furitenImage = document.getElementById(`${playerId}-furiten`);
-            furitenImage.style.display = isFuriten[playerId] ? 'block' : 'none';
+            // CPU対戦モードのときは自分以外表示しない
+            if (mode === "cpu" && playerId !== "bottom") {
+            } else {
+                const furitenImage = document.getElementById(`${playerId}-furiten`);
+                furitenImage.style.display = isFuriten[playerId] ? 'block' : 'none';
+            }
         }
     }
 
@@ -2972,8 +3106,12 @@ function updateFuritenStatus(playerId) {
     }
 
     // フリテン状態に応じて画像を表示/非表示
-    const furitenImage = document.getElementById(`${playerId}-furiten`);
-    furitenImage.style.display = isFuriten[playerId] ? 'block' : 'none';
+    // CPU対戦モードのときは自分以外表示しない
+    if (mode === "cpu" && playerId !== "bottom") {
+    } else {
+        const furitenImage = document.getElementById(`${playerId}-furiten`);
+        furitenImage.style.display = isFuriten[playerId] ? 'block' : 'none';
+    }
 }
 
 /**
@@ -3051,15 +3189,43 @@ function drawTile(playerId) {
             }
             if (checkKan(playerId, null)) {
                 isExecuteAnkanWaiting = true;
-                // カンボタンを表示
-                showKanButtons(playerId);
-                // カンボタンのイベントリスナーを設定
-                setupKanButtonListener(playerId, null, fourOfAKindTiles);
 
-                // リーチしていたらスキップボタンあり
-                if (isRiichi[playerId]) {
-                    showSkipButtons(playerId);
-                    setupSkipButtonListener(playerId, true);
+                // CPU対戦モードのときは暗カン可能であれば暗カンする
+                if (mode === "cpu" && playerId !== "bottom") {
+                    PLAYER_IDS.forEach((playerId) => {
+                        isRiichiFirstTurn[playerId] = false;
+                    });
+                    isExecuteAnkanWaiting = false;
+                    // 直前のプレイヤーのリーチ後初回ターンであればリーチ成立処理を行う
+                    const previousPlayerIndex = PLAYER_IDS.indexOf(null);
+                    if (isRiichiFirstDeposit[PLAYER_IDS[previousPlayerIndex]]) {
+                        // リーチ棒を表示
+                        const riichiTenbouImage = document.getElementById(`${PLAYER_IDS[previousPlayerIndex]}-riichi-tenbou`);
+                        riichiTenbouImage.style.display = 'block'; // 画像を表示
+                        // 供託数をインクリメントする
+                        riichiDeposit++;
+                        updateRiichiDepositDisplay();
+                        // 自分の点数から1000点引く
+                        playerScores[PLAYER_IDS[previousPlayerIndex]] -= 1000;
+                        updatePlayerScoresDisplay();
+                        isRiichiFirstDeposit[PLAYER_IDS[previousPlayerIndex]] = false;
+
+                    }
+
+                    // カン処理の実装
+                    handleKan(playerId, null, fourOfAKindTiles)
+                }
+                else {
+                    // カンボタンを表示
+                    showKanButtons(playerId);
+                    // カンボタンのイベントリスナーを設定
+                    setupKanButtonListener(playerId, null, fourOfAKindTiles);
+
+                    // リーチしていたらスキップボタンあり
+                    if (isRiichi[playerId]) {
+                        showSkipButtons(playerId);
+                        setupSkipButtonListener(playerId, true);
+                    }
                 }
             }
 
@@ -3074,8 +3240,21 @@ function drawTile(playerId) {
                 !isRiichi[playerId] &&
                 (melds[playerId].length === 0 || melds[playerId].some(meld => meld.meldType === 'ankan')) &&
                 playerScores[playerId] >= 1000) {
-                showRiichiButtons(playerId);
-                setupRiichiButtonListener(playerId);
+                // CPU対戦モードのときは、中盤以降リーチ可能であればリーチする
+                if (mode === "cpu" && playerId !== "bottom") {
+                    if (remainingTilesCount <= 50) {
+                        isExecuteAnkanWaiting = false;
+                        isRiichiFirstTurn[playerId] = true;
+                        riichiTurn[playerId] = remainingTilesCount;
+                        // リーチ宣言済み
+                        isRiichi[playerId] = true;
+                        // リーチ処理の実装
+                        handleRiichi(playerId);
+                    }
+                } else {
+                    showRiichiButtons(playerId);
+                    setupRiichiButtonListener(playerId);
+                }
             }
         }
         // ツモ判定を行う
@@ -3665,7 +3844,16 @@ function showRoundResult(scoreChanges, playerId) {
             if (winningHandData.yakumanList.length > 0) {
                 yakuHtml = '<div class="yaku-list"><br>';
                 winningHandData.yakumanList.forEach(yakuman => {
-                    yakuHtml += `${yakuman.name}（${yakuman.power}倍）</p>`;
+                    let power = '';
+                    switch (yakuman.power) {
+                        case 1:
+                            power = '役満';
+                            break;
+                        case 2:
+                            power = 'ダブル';
+                            break;
+                    }
+                    yakuHtml += `${yakuman.name}（${power}）</p>`;
                 });
                 yakuHtml += `<p style="font-weight: bold; font-size: larger; color: red;">${yakuRank}</p>`;
             } else {
@@ -3781,6 +3969,10 @@ backToTitleButton.addEventListener('click', () => {
 
 // 読み込み時のイベントリスナー
 document.addEventListener('DOMContentLoaded', () => {
+    // URLSearchParamsオブジェクトを作成
+    const urlParams = new URLSearchParams(window.location.search);
+    // 'mode' パラメータを取得
+    mode = urlParams.get('mode');
 
     // 初期化時に実行
     resizeAppContainer();

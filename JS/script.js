@@ -7,19 +7,16 @@ const yakuListButton = document.getElementById('yakuList-button');
 
 // CPU対戦モードボタンのクリックイベントリスナー
 vsCPUlButton.addEventListener('click', () => {
-    // game.html に遷移
-    window.location.href = 'game.html?mode=cpu"';
+    window.location.href = 'game.html?mode=cpu';
 });
 
 // オンライン対戦モードボタンのクリックイベントリスナー
 vsOnlineButton.addEventListener('click', () => {
-    // game.html に遷移
-    window.location.href = 'game.html?mode=online';
+    // window.location.href = 'game.html?mode=online';
 });
 
 // 全手動モードボタンのクリックイベントリスナー
 allManualButton.addEventListener('click', () => {
-    // game.html に遷移
     window.location.href = 'game.html?mode=manual';
 });
 

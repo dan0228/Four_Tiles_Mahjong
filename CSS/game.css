@@ -464,19 +464,27 @@ html {
     height: auto;
 }
 
-/* 残り牌数の画像を中央に配置 */
-#remaining-tiles-images {
+/* 残り牌数の各桁の画像のサイズを調整 */
+#remaining-tiles-hundreds {
     position: absolute;
     top: 51.7%;
-    left: 1%;
-    width: 100%;
-    height: 100%;
+    left: 49.4%;
+    width: 1.1%;
+    height: auto;
 }
 
-/* 残り牌数の各桁の画像のサイズを調整 */
-#remaining-tiles-hundreds,
-#remaining-tiles-tens,
+#remaining-tiles-tens {
+    position: absolute;
+    top: 51.7%;
+    left: 50.7%;
+    width: 1.1%;
+    height: auto;
+}
+
 #remaining-tiles-ones {
+    position: absolute;
+    top: 51.7%;
+    left: 52%;
     width: 1.1%;
     height: auto;
 }
@@ -802,7 +810,7 @@ html {
     display: flex;
     justify-content: left;
     width: 100%;
-    margin-left: 30px;
+    margin-left: 20px;
     white-space: nowrap;
 }
 
@@ -812,7 +820,7 @@ html {
     width: 100%;
     flex-direction: column;
     text-align: center;
-    margin-left: 50px;
+    margin-left: 35px;
 }
 
 /* 宣言のスタイル */
