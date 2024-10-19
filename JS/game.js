@@ -463,20 +463,20 @@ function updateRiichiDepositDisplay() {
  */
 function updatePlayerScoresDisplay() {
     PLAYER_IDS.forEach(playerId => {
-        const scoreElement = document.getElementById(`${playerId}-score`);
-        scoreElement.innerHTML = ''; // 既存の画像をクリア
 
         let scoreString = playerScores[playerId].toString();
-        if (scoreString === '0') {
-            // 0点の場合は0のみ表示
-            scoreString = '0';
-        } else {
-            // 0点以外の場合、頭に0が表示されないようにする
-            scoreString = scoreString.replace(/^0+/, '');
-        }
-        for (let i = 0; i < scoreString.length; i++) {
+        scoreString = scoreString.padStart(5, '0'); //5桁にする
+        let isHeadNumberZero = true;
+        for (let i = 0; i < 5; i++) {
+            const scoreElement = document.getElementById(`${playerId}-score-${i + 1}`);
+            scoreElement.innerHTML = ''; // 既存の画像をクリア
             const digitImage = document.createElement('img');
-            digitImage.src = `Picture/number/${scoreString[i]}.png`;
+            if (scoreString[i] !== "0" || !isHeadNumberZero) {
+                isHeadNumberZero = false;
+                digitImage.src = `Picture/number/${scoreString[i]}.png`;
+            } else {
+                digitImage.src = `Picture/number/00.png`;
+            }
             digitImage.alt = scoreString[i];
             scoreElement.appendChild(digitImage);
         }

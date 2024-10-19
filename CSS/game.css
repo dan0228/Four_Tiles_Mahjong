@@ -401,7 +401,11 @@ html {
 #left-skip-button,
 #left-pon-button,
 #left-riichi-button,
-#left-score,
+#left-score-1,
+#left-score-2,
+#left-score-3,
+#left-score-4,
+#left-score-5,
 #left-furiten,
 #left-melds,
 #left-riichi-tenbou {
@@ -415,7 +419,11 @@ html {
 #right-skip-button,
 #right-pon-button,
 #right-riichi-button,
-#right-score,
+#right-score-1,
+#right-score-2,
+#right-score-3,
+#right-score-4,
+#right-score-5,
 #right-furiten,
 #right-melds,
 #right-riichi-tenbou {
@@ -429,7 +437,11 @@ html {
 #top-skip-button,
 #top-pon-button,
 #top-riichi-button,
-#top-score,
+#top-score-1,
+#top-score-2,
+#top-score-3,
+#top-score-4,
+#top-score-5,
 #top-furiten,
 #top-melds,
 #top-riichi-tenbou {
@@ -568,39 +580,133 @@ html {
 }
 
 /* プレイヤーの点数表示 */
-#left-score {
-    position: absolute;
-    top: 0.2%;
+#left-score-1 {
+    top: -4.8%;
     left: -31.6%;
 }
 
-#right-score {
-    position: absolute;
-    top: 0.2%;
+#left-score-2 {
+    top: -2.8%;
+    left: -31.6%;
+}
+
+#left-score-3 {
+    top: -0.8%;
+    left: -31.6%;
+}
+
+#left-score-4 {
+    top: 1.2%;
+    left: -31.6%;
+}
+
+#left-score-5 {
+    top: 3.2%;
+    left: -31.6%;
+}
+
+#right-score-1 {
+    top: 4.8%;
     left: 32.2%;
 }
 
-#top-score {
-    position: absolute;
+#right-score-2 {
+    top: 2.8%;
+    left: 32.2%;
+}
+
+#right-score-3 {
+    top: 0.8%;
+    left: 32.2%;
+}
+
+#right-score-4 {
+    top: -1.2%;
+    left: 32.2%;
+}
+
+#right-score-5 {
+    top: -3.2%;
+    left: 32.2%;
+}
+
+#top-score-1 {
     top: -56.4%;
-    left: 0.2%;
+    left: 3%;
 }
 
-#bottom-score {
-    position: absolute;
+#top-score-2 {
+    top: -56.4%;
+    left: 2%;
+}
+
+#top-score-3 {
+    top: -56.4%;
+    left: 1%;
+}
+
+#top-score-4 {
+    top: -56.4%;
+    left: 0%;
+}
+
+#top-score-5 {
+    top: -56.4%;
+    left: -1%;
+}
+
+#bottom-score-1 {
     top: 56.5%;
-    left: 0.2%;
+    left: -2%;
 }
 
-#left-score,
-#right-score,
-#top-score,
-#bottom-score {
+#bottom-score-2 {
+    top: 56.5%;
+    left: -1%;
+}
+
+#bottom-score-3 {
+    top: 56.5%;
+    left: 0%;
+}
+
+#bottom-score-4 {
+    top: 56.5%;
+    left: 1%;
+}
+
+#bottom-score-5 {
+    top: 56.5%;
+    left: 2%;
+}
+
+#left-score-1,
+#left-score-2,
+#left-score-3,
+#left-score-4,
+#left-score-5,
+#right-score-1,
+#right-score-2,
+#right-score-3,
+#right-score-4,
+#right-score-5,
+#top-score-1,
+#top-score-2,
+#top-score-3,
+#top-score-4,
+#top-score-5,
+#bottom-score-1,
+#bottom-score-2,
+#bottom-score-3,
+#bottom-score-4,
+#bottom-score-5 {
+    position: absolute;
     width: 100%;
     height: 100%;
 }
 
 .player-score img {
+    position: absolute;
     width: 1%;
     height: auto;
 }
