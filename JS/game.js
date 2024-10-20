@@ -380,19 +380,19 @@ function initializeTiles() {
         for (let i = 1; i <= NUM_TILES_PER_SUIT; i++) {
             // 各数牌を4枚ずつpush
             for (let j = 0; j < 4; j++) {
-                allTiles.push(i + suit);
+                // allTiles.push(i + suit);
                 //TODO テスト用 
-                // switch (i) {
-                //     case 1: allTiles.push('1萬'); break;
-                //     case 2: allTiles.push('2萬'); break;
-                //     case 3: allTiles.push('1萬'); break;
-                //     case 4: allTiles.push('2萬'); break;
-                //     case 5: allTiles.push('1萬'); break;
-                //     case 6: allTiles.push('1萬'); break;
-                //     case 7: allTiles.push('1萬'); break;
-                //     case 8: allTiles.push('1萬'); break;
-                //     case 9: allTiles.push('1萬'); break;
-                // }
+                switch (i) {
+                    case 1: allTiles.push('1萬'); break;
+                    //     case 2: allTiles.push('2萬'); break;
+                    //     case 3: allTiles.push('1萬'); break;
+                    //     case 4: allTiles.push('2萬'); break;
+                    //     case 5: allTiles.push('1萬'); break;
+                    //     case 6: allTiles.push('1萬'); break;
+                    //     case 7: allTiles.push('1萬'); break;
+                    //     case 8: allTiles.push('1萬'); break;
+                    //     case 9: allTiles.push('1萬'); break;
+                }
             }
         }
     });
@@ -762,9 +762,6 @@ async function proceedToNextRound() {
  * @param {string} playerId プレイヤーID
  */
 async function startTurn(playerId) {
-    // 点数表示を更新
-    updatePlayerScoresDisplay();
-
     // 牌を引く
     drawTile(playerId);
 
@@ -2995,6 +2992,59 @@ function isTenpai(tiles) {
     return waitingTiles;
 }
 
+/**
+ * テンパイのプレイヤーの手牌をオープンにする
+ */
+function revealTenpaiHands() {
+    PLAYER_IDS.forEach(playerId => {
+        // テンパイ判定
+        const isTenpaiPlayer = isTenpai(getHandTiles(playerId)).length > 0;
+
+        const playerHandElement = playerHandElements[playerId];
+        const tiles = Array.from(playerHandElement.children);
+
+        tiles.forEach((tileElement, index) => {
+            const imgElement = tileElement.querySelector('img');
+            const tile = imgElement.alt;
+
+            // 牌の種類と数字を取得 (字牌は種類のみ)
+            const suit = tile.slice(-1);
+            const number = SUIT_TYPES.includes(suit) ? tile.slice(0, -1) : null;
+
+            // 画像ファイル名を生成
+            let imgFileName = "";
+            if (number !== null) {
+                // 数牌の場合
+                switch (suit) {
+                    case '萬': imgFileName = `manzu_${number}.png`; break;
+                    case '筒': imgFileName = `pinzu_${number}.png`; break;
+                    case '索': imgFileName = `sozu_${number}.png`; break;
+                }
+            } else {
+                // 字牌の場合
+                switch (suit) {
+                    case '東': imgFileName = "zi_ton.png"; break;
+                    case '南': imgFileName = "zi_nan.png"; break;
+                    case '西': imgFileName = "zi_sha.png"; break;
+                    case '北': imgFileName = "zi_pei.png"; break;
+                    case '白': imgFileName = "zi_haku.png"; break;
+                    case '發': imgFileName = "zi_hatsu.png"; break;
+                    case '中': imgFileName = "zi_chun.png"; break;
+                }
+            }
+
+            // CPUの場合またはテンパイしていないプレイヤーの場合のみ裏にする
+            if (mode === "cpu" && playerId !== "bottom") {
+                if (!isTenpaiPlayer) {
+                    imgFileName = "ura.png";
+                }
+            }
+
+            imgElement.src = `picture/tiles/${imgFileName}`; // 画像ファイルパスを設定
+        });
+    });
+}
+
 // --- その他の関数 ---
 
 /**
@@ -3147,6 +3197,11 @@ function drawTile(playerId) {
         // 残り牌数の表示を更新
         if (remainingTilesCount < 0) {
             isRyuukyoku = true;
+            // CPU対戦モードのときは手を開ける
+            if (mode === "cpu") {
+                revealTenpaiHands();
+            }
+
             console.log("流局です。次の局に進みます。");
             // 点数の移動を行う
             const scoreChanges = handlePointTransfer(null, null);

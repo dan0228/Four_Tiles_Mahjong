@@ -84,29 +84,29 @@ html {
     position: absolute;
     display: flex;
     flex-wrap: nowrap;
-    width: 40%;
+    width: 58%;
 }
 
 .player-discarded {
     position: absolute;
     display: flex;
     flex-wrap: wrap;
-    width: 20%;
+    width: 27%;
 
     /* 各プレイヤーの捨て牌エリアの位置を調整 */
     &#bottom-discarded {
-        top: 21.5%;
-        left: 31%;
+        top: 25%;
+        left: 30%;
     }
 
     &#left-discarded {
-        top: -160%;
-        left: 30.5%;
+        top: -140%;
+        left: 33%;
     }
 
     &#right-discarded {
-        top: -150%;
-        right: 49.5%;
+        top: -140%;
+        right: 40%;
     }
 
     &#top-discarded {
@@ -115,26 +115,10 @@ html {
     }
 }
 
-/* 捨て牌を4行7列に配置 */
+/* 捨て牌を3行9列に配置 */
 .player-discarded .discarded-tile {
-    width: calc(100% / 7.5);
-}
-
-/* 捨て牌を4行7列に配置 */
-.player-discarded .discarded-tile:nth-child(n + 1):nth-child(-n + 7) {
-    /* 1行目 */
-}
-
-.player-discarded .discarded-tile:nth-child(n + 8):nth-child(-n + 14) {
-    /* 2行目 */
-}
-
-.player-discarded .discarded-tile:nth-child(n + 15):nth-child(-n + 21) {
-    /* 3行目 */
-}
-
-.player-discarded .discarded-tile:nth-child(n + 22):nth-child(-n + 28) {
-    /* 4行目 */
+    width: calc(100% / 9.5);
+    margin-bottom: -3px;
 }
 
 /* ツモ牌の左側に隙間を追加 */
@@ -146,10 +130,15 @@ html {
 #bottom-player {
     position: absolute;
     left: 60%;
-    bottom: 9.9%;
+    bottom: 14%;
     transform: translateX(-50%);
     width: 100%;
-    padding-top: calc(34% * (9 / 16));
+    padding-top: calc(30% * (9 / 16));
+}
+
+#bottom-hand {
+    left: 25%;
+    bottom: -47%;
 }
 
 #left-player {
@@ -162,6 +151,11 @@ html {
     padding-top: calc(11.5% * (9 / 16));
 }
 
+#left-hand {
+    left: 25%;
+    bottom: -90%;
+}
+
 #right-player {
     position: absolute;
     right: -77%;
@@ -172,6 +166,11 @@ html {
     padding-top: calc(11.5% * (9 / 16));
 }
 
+#right-hand {
+    left: 25%;
+    bottom: -90%;
+}
+
 #top-player {
     position: absolute;
     top: 3.6%;
@@ -180,6 +179,11 @@ html {
     transform-origin: bottom center;
     width: 100%;
     padding-top: calc(6.7% * (9 / 16));
+}
+
+#top-hand {
+    left: 25%;
+    bottom: -150%;
 }
 
 .tile.manzu {
