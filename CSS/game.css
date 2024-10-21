@@ -251,22 +251,22 @@ html {
 #bottom-kan-button {
     position: absolute;
     top: 76%;
-    left: 65%;
+    left: 66%;
 }
 
 #left-ron-button,
 #left-tsumo-button,
 #left-kan-button {
     position: absolute;
-    top: 75%;
-    left: 21%;
+    top: 83%;
+    left: 20%;
 }
 
 #right-ron-button,
 #right-tsumo-button,
 #right-kan-button {
     position: absolute;
-    top: 12%;
+    top: 8%;
     left: 69.5%;
 }
 
@@ -275,7 +275,7 @@ html {
 #top-kan-button {
     position: absolute;
     top: 14.5%;
-    left: 26%;
+    left: 24%;
 }
 
 /* スキップボタンのスタイル */
@@ -297,25 +297,25 @@ html {
 #bottom-skip-button {
     position: absolute;
     top: 91%;
-    left: 64.5%;
+    left: 65.5%;
 }
 
 #left-skip-button {
     position: absolute;
-    top: 74%;
+    top: 82.5%;
     left: 12%;
 }
 
 #right-skip-button {
     position: absolute;
-    top: 13%;
+    top: 9%;
     left: 78%;
 }
 
 #top-skip-button {
     position: absolute;
     top: -0.5%;
-    left: 26.5%;
+    left: 24.5%;
 }
 
 /* ポンボタンのスタイル */
@@ -337,25 +337,25 @@ html {
 #bottom-pon-button {
     position: absolute;
     top: 83%;
-    left: 65%;
+    left: 66%;
 }
 
 #left-pon-button {
     position: absolute;
-    top: 75%;
-    left: 16.8%;
+    top: 83%;
+    left: 16%;
 }
 
 #right-pon-button {
     position: absolute;
-    top: 12%;
+    top: 8%;
     left: 73.4%;
 }
 
 #top-pon-button {
     position: absolute;
     top: 7.5%;
-    left: 26%;
+    left: 24%;
 }
 
 /* リーチボタンのスタイル */
@@ -377,25 +377,25 @@ html {
 #bottom-riichi-button {
     position: absolute;
     top: 83%;
-    left: 64.5%;
+    left: 65.5%;
 }
 
 #left-riichi-button {
     position: absolute;
-    top: 74%;
-    left: 16.8%;
+    top: 82%;
+    left: 16%;
 }
 
 #right-riichi-button {
     position: absolute;
-    top: 13%;
+    top: 8.7%;
     left: 73.4%;
 }
 
 #top-riichi-button {
     position: absolute;
     top: 7.5%;
-    left: 26.5%;
+    left: 24.5%;
 }
 
 /* 左側プレイヤーのボタン、点数、フリテン表示、鳴き牌は回転 */
@@ -726,30 +726,28 @@ html {
     background-size: contain;
     background-repeat: no-repeat;
     border: none;
-    top: 0%;
-    left: 0%;
     width: 10%;
     padding-top: 60%;
 }
 
 #bottom-furiten {
     top: 87.5%;
-    left: 30%;
+    left: 26%;
 }
 
 #left-furiten {
-    top: -30%;
+    top: -37%;
     left: -11%;
 }
 
 #right-furiten {
-    top: 23%;
+    top: 30%;
     left: 101%;
 }
 
 #top-furiten {
     top: -95%;
-    left: 60%;
+    left: 64%;
 }
 
 /* ポン、カン牌のスタイル*/
@@ -761,7 +759,7 @@ html {
 
 #bottom-melds {
     position: absolute;
-    top: 89%;
+    top: 90.5%;
     left: 75%;
     width: 100%;
 }
@@ -804,8 +802,8 @@ html {
 /* 王牌のスタイル */
 #wall-tiles {
     position: absolute;
-    top: 88%;
-    left: 12%;
+    top: 12%;
+    left: 8%;
     width: 100%;
 }
 
@@ -817,8 +815,8 @@ html {
 /* ドラ表示牌のスタイル */
 #dora-tiles {
     position: absolute;
-    top: 88%;
-    left: 12%;
+    top: 12%;
+    left: 8%;
     width: 100%;
 }
 
@@ -935,8 +933,6 @@ html {
 
 /* 宣言のスタイル */
 .declaration-image {
-    width: 100%;
+    width: 80%;
     position: absolute;
-    left: 0%;
-    top: 50px;
 }

@@ -212,7 +212,6 @@ function addTileToHand(playerId, tile, isTsumo = false) {
         isUra = true;
     }
     const tileElement = createTileElement(tile, false, isUra);
-    // const tileElement = createTileElement(tile, false, false); // TODOテスト用
     // ツモ牌の場合、tsumo-tileクラスを追加
     if (isTsumo) {
         tileElement.classList.add("tsumo-tile");
@@ -380,19 +379,7 @@ function initializeTiles() {
         for (let i = 1; i <= NUM_TILES_PER_SUIT; i++) {
             // 各数牌を4枚ずつpush
             for (let j = 0; j < 4; j++) {
-                // allTiles.push(i + suit);
-                //TODO テスト用 
-                switch (i) {
-                    case 1: allTiles.push('1萬'); break;
-                    //     case 2: allTiles.push('2萬'); break;
-                    //     case 3: allTiles.push('1萬'); break;
-                    //     case 4: allTiles.push('2萬'); break;
-                    //     case 5: allTiles.push('1萬'); break;
-                    //     case 6: allTiles.push('1萬'); break;
-                    //     case 7: allTiles.push('1萬'); break;
-                    //     case 8: allTiles.push('1萬'); break;
-                    //     case 9: allTiles.push('1萬'); break;
-                }
+                allTiles.push(i + suit);
             }
         }
     });
@@ -3040,6 +3027,10 @@ function revealTenpaiHands() {
                 }
             }
 
+            if (isTenpaiPlayer) {
+                showDeclaration(playerId, 'tenpai');
+            }
+
             imgElement.src = `picture/tiles/${imgFileName}`; // 画像ファイルパスを設定
         });
     });
@@ -3197,29 +3188,31 @@ function drawTile(playerId) {
         // 残り牌数の表示を更新
         if (remainingTilesCount < 0) {
             isRyuukyoku = true;
-            // CPU対戦モードのときは手を開ける
-            if (mode === "cpu") {
-                revealTenpaiHands();
-            }
+            // テンパイ者は手を開ける
+            revealTenpaiHands();
 
             console.log("流局です。次の局に進みます。");
             // 点数の移動を行う
             const scoreChanges = handlePointTransfer(null, null);
-            // 局の結果画面表示
-            console.log(scoreChanges);
-            showRoundResult(scoreChanges, null)
-                .then(() => { // confirmButtonTextが押された後に実行される処理
-                    // 次の局に進める
-                    proceedToNextRound();
-                });
-            return;
+
+            setTimeout(() => {
+                // 局の結果画面表示
+                console.log(scoreChanges);
+                showRoundResult(scoreChanges, null)
+                    .then(() => { // confirmButtonTextが押された後に実行される処理
+                        // 次の局に進める
+                        proceedToNextRound();
+                    });
+                return;
+            }, 1000); // 1秒の遅延
+
         } else {
             updateRemainingTilesDisplay();
             // ツモ音を再生
             playSound(dahaiSound);
+            // 手牌に牌を追加
+            addTileToHand(playerId, tile, true);
         }
-
-        addTileToHand(playerId, tile, true);
 
         if (remainingTilesCount >= 1) {
             // 加カン判定
@@ -3501,28 +3494,12 @@ function hideAllSkipButtons() {
 /**
  * 宣言を表示する
  * @param {string} playerId 宣言したプレイヤーID 
- * @param {string} declarationType 宣言の種類 ('ron', 'tsumo', 'riichi', 'pon', 'kan')
+ * @param {string} declarationType 宣言の種類 ('ron', 'tsumo', 'riichi', 'pon', 'kan', 'tenpai')
  */
 function showDeclaration(playerId, declarationType) {
     // 宣言の画像を作成
     const declarationImage = document.createElement('img');
-    switch (declarationType) {
-        case "ron":
-            declarationImage.src = 'Picture/ron2.png';
-            break;
-        case "tsumo":
-            declarationImage.src = 'Picture/tsumo2.png';
-            break;
-        case "riichi":
-            declarationImage.src = 'Picture/riichi2.png';
-            break;
-        case "pon":
-            declarationImage.src = 'Picture/pon2.png';
-            break;
-        case "kan":
-            declarationImage.src = 'Picture/kan2.png';
-            break;
-    }
+    declarationImage.src = `Picture/${declarationType}2.png`;
     declarationImage.classList.add('declaration-image');
     // 表示位置を調整 (自分の捨て牌の上に重なるように)
     const playerDiscardedElement = playerDiscardedElements[playerId];
@@ -3532,7 +3509,7 @@ function showDeclaration(playerId, declarationType) {
 /**
  * 宣言画像を消す
  * @param {string} playerId 宣言したプレイヤーID
- * @param {string} declarationType 宣言の種類 ('ron', 'tsumo', 'riichi', 'pon', 'kan')
+ * @param {string} declarationType 宣言の種類 ('ron', 'tsumo', 'riichi', 'pon', 'kan', 'tenpai')
  */
 function hideDeclaration(playerId, declarationType) {
     const playerDiscardedElement = playerDiscardedElements[playerId];
