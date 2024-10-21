@@ -117,7 +117,7 @@ const dahaiSound = document.getElementById("dahaiSound");
 const muteButton = document.getElementById('mute-button');
 // ミュートボタンの画像要素を作成
 const muteButtonImage = document.createElement('img');
-muteButtonImage.src = '../Picture/unmute.png'; // 初期状態の画像を設定
+muteButtonImage.src = './Picture/unmute.png'; // 初期状態の画像を設定
 muteButton.appendChild(muteButtonImage); // 画像をボタンに追加
 
 // 音声のオン/オフ状態を管理する変数
@@ -177,7 +177,7 @@ function createTileElement(tile, isDiscarded = false, isUra) {
             }
         }
     }
-    imgElement.src = `../Picture/tiles/${imgFileName}`; // 修正後の画像ファイルパス
+    imgElement.src = `./Picture/tiles/${imgFileName}`; // 修正後の画像ファイルパス
     imgElement.alt = tile; // 画像が表示されない場合の代替テキスト
     tileElement.appendChild(imgElement);
 
@@ -352,21 +352,21 @@ function initializeGame() {
     const gameInfoImage = document.getElementById('game-info-image');
     switch (PLAYER_IDS[dealerIndex]) {
         case 'bottom':
-            gameInfoImage.src = '../Picture/info_bottom.png';
+            gameInfoImage.src = './Picture/info_bottom.png';
             break;
         case 'left':
-            gameInfoImage.src = '../Picture/info_left.png';
+            gameInfoImage.src = './Picture/info_left.png';
             break;
         case 'right':
-            gameInfoImage.src = '../Picture/info_right.png';
+            gameInfoImage.src = './Picture/info_right.png';
             break;
         case 'top':
-            gameInfoImage.src = '../Picture/info_top.png';
+            gameInfoImage.src = './Picture/info_top.png';
             break;
     }
     // 初期化
     const roundImage = document.getElementById('round-image');
-    roundImage.src = '../Picture/ton1.png'; // 最初は1局目なのでton1を表示
+    roundImage.src = './Picture/ton1.png'; // 最初は1局目なのでton1を表示
 }
 
 /**
@@ -427,9 +427,9 @@ function updateRemainingTilesDisplay() {
     const paddedRemainingTiles = remainingTilesCount.toString().padStart(3, '0');
 
     // 各桁の画像を設定
-    hundredsImage.src = `../Picture/number/${paddedRemainingTiles[0]}ao.png`;
-    tensImage.src = `../Picture/number/${paddedRemainingTiles[1]}ao.png`;
-    onesImage.src = `../Picture/number/${paddedRemainingTiles[2]}ao.png`;
+    hundredsImage.src = `./Picture/number/${paddedRemainingTiles[0]}ao.png`;
+    tensImage.src = `./Picture/number/${paddedRemainingTiles[1]}ao.png`;
+    onesImage.src = `./Picture/number/${paddedRemainingTiles[2]}ao.png`;
 }
 
 /**
@@ -442,7 +442,7 @@ function updateRiichiDepositDisplay() {
     const depositString = riichiDeposit.toString().padStart(1, '0');
 
     // 各桁の画像を設定
-    onesImage.src = `../Picture/number/${depositString[0]}w.png`;
+    onesImage.src = `./Picture/number/${depositString[0]}w.png`;
 }
 
 /**
@@ -460,9 +460,9 @@ function updatePlayerScoresDisplay() {
             const digitImage = document.createElement('img');
             if (scoreString[i] !== "0" || !isHeadNumberZero) {
                 isHeadNumberZero = false;
-                digitImage.src = `../Picture/number/${scoreString[i]}.png`;
+                digitImage.src = `./Picture/number/${scoreString[i]}.png`;
             } else {
-                digitImage.src = `../Picture/number/00.png`;
+                digitImage.src = `./Picture/number/00.png`;
             }
             digitImage.alt = scoreString[i];
             scoreElement.appendChild(digitImage);
@@ -479,7 +479,7 @@ function displayWallTiles() {
     for (let i = 0; i < 4; i++) {
         const tile = wallTiles[i];
         const imgElement = document.createElement('img');
-        imgElement.src = `../Picture/tiles/ura.png`;
+        imgElement.src = `./Picture/tiles/ura.png`;
         imgElement.alt = tile;
         wallTilesContainer.appendChild(imgElement);
     }
@@ -527,7 +527,7 @@ function displayDoraTile(doraTileNumber) {
             }
         }
 
-        imgElement.src = `../Picture/tiles/${imgFileName}`;
+        imgElement.src = `./Picture/tiles/${imgFileName}`;
         imgElement.alt = tile;
         doraTileElement.appendChild(imgElement);
 
@@ -711,32 +711,32 @@ async function proceedToNextRound() {
     const roundImage = document.getElementById('round-image');
     switch (PLAYER_IDS[dealerIndex]) {
         case 'bottom':
-            gameInfoImage.src = '../Picture/info_bottom.png';
+            gameInfoImage.src = './Picture/info_bottom.png';
             break;
         case 'left':
-            gameInfoImage.src = '../Picture/info_left.png';
+            gameInfoImage.src = './Picture/info_left.png';
             break;
         case 'right':
-            gameInfoImage.src = '../Picture/info_right.png';
+            gameInfoImage.src = './Picture/info_right.png';
             break;
         case 'top':
-            gameInfoImage.src = '../Picture/info_top.png';
+            gameInfoImage.src = './Picture/info_top.png';
             break;
     }
 
     // 局数に応じて画像を変更
     switch (currentRound) {
         case 1:
-            roundImage.src = '../Picture/ton1.png';
+            roundImage.src = './Picture/ton1.png';
             break;
         case 2:
-            roundImage.src = '../Picture/ton2.png';
+            roundImage.src = './Picture/ton2.png';
             break;
         case 3:
-            roundImage.src = '../Picture/ton3.png';
+            roundImage.src = './Picture/ton3.png';
             break;
         case 4:
-            roundImage.src = '../Picture/ton4.png';
+            roundImage.src = './Picture/ton4.png';
             break;
     }
 
@@ -1440,7 +1440,7 @@ async function handleKan(playerId, targetPlayerId, tile) {
         // 暗カンの場合、両端の牌 (i === 0 と i === 3) の画像を裏に変更
         if (!isKakan && targetPlayerId === null && (i === 0 || i === 3)) {
             const imgElement = kanTileElement.querySelector('img');
-            imgElement.src = '../Picture/tiles/ura.png';
+            imgElement.src = './Picture/tiles/ura.png';
             imgElement.alt = '裏';
             isChangeElement = true;
         }
@@ -3031,7 +3031,7 @@ function revealTenpaiHands() {
                 showDeclaration(playerId, 'tenpai');
             }
 
-            imgElement.src = `../Picture/tiles/${imgFileName}`; // 画像ファイルパスを設定
+            imgElement.src = `./Picture/tiles/${imgFileName}`; // 画像ファイルパスを設定
         });
     });
 }
@@ -3499,7 +3499,7 @@ function hideAllSkipButtons() {
 function showDeclaration(playerId, declarationType) {
     // 宣言の画像を作成
     const declarationImage = document.createElement('img');
-    declarationImage.src = `../Picture/${declarationType}2.png`;
+    declarationImage.src = `./Picture/${declarationType}2.png`;
     declarationImage.classList.add('declaration-image');
     // 表示位置を調整 (自分の捨て牌の上に重なるように)
     const playerDiscardedElement = playerDiscardedElements[playerId];
@@ -3843,7 +3843,7 @@ function showRoundResult(scoreChanges, playerId) {
                     case 'ankan':
                         if (i === 0 || i === 3) {
                             const imgElement = meldTileElement.querySelector('img');
-                            imgElement.src = '../Picture/tiles/ura.png';
+                            imgElement.src = './Picture/tiles/ura.png';
                             imgElement.alt = '裏';
                         }
                         winningMeldHtml += meldTileElement.outerHTML;
@@ -3990,7 +3990,7 @@ muteButton.addEventListener('click', () => {
     });
 
     // ボタンの画像を変更
-    muteButtonImage.src = isMuted ? '../Picture/mute.png' : '../Picture/unmute.png';
+    muteButtonImage.src = isMuted ? './Picture/mute.png' : './Picture/unmute.png';
 });
 
 // 戻るボタンのクリックイベントリスナー
