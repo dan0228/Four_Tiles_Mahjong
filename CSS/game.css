@@ -873,15 +873,16 @@ html {
 .doraWanpai-tiles {
     display: flex;
     justify-content: left;
-    width: 400%;
-    margin-left: 50px;
+    width: 420%;
+    padding: 38%;
 }
 
 .uraDoraWanpai-tiles {
     display: flex;
     justify-content: right;
     width: 75%;
-    margin-left: 50px;
+    padding: 6%;
+    margin-left: 30px;
 }
 
 .result-hand {
@@ -895,7 +896,7 @@ html {
     justify-content: left;
     width: 150%;
     margin-top: 25px;
-    margin-left: 130px;
+    margin-left: 100px;
 }
 
 .winning-meld {
@@ -907,7 +908,7 @@ html {
 }
 
 .winning-hand .last-tile {
-    margin-left: -25px;
+    margin-left: -15px;
 }
 
 .doraWanpai-info,
